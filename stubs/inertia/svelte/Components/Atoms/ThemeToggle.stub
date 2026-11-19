@@ -1,0 +1,46 @@
+<script>
+    import { onMount } from 'svelte';
+
+    let isDark = false;
+
+    onMount(() => {
+        const currentTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+        isDark = currentTheme === 'dark';
+    });
+
+    function toggleTheme() {
+        const nextTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        if (nextTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        try {
+            localStorage.setItem('veltra-theme', nextTheme);
+            localStorage.setItem('appearance', nextTheme);
+            localStorage.setItem('flux.appearance', nextTheme);
+            document.cookie = `appearance=${nextTheme};path=/;max-age=31536000;SameSite=Lax`;
+            document.cookie = `flux.appearance=${nextTheme};path=/;max-age=31536000;SameSite=Lax`;
+        } catch (e) {}
+        isDark = !isDark;
+    }
+</script>
+
+<button
+    type="button"
+    on:click={toggleTheme}
+    aria-label="Toggle theme"
+    class="w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 bg-slate-100/80 dark:bg-slate-800/80 transition-colors border border-slate-200/50 dark:border-slate-700/50"
+>
+    {#if isDark}
+        <svg class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" stroke-width="2" />
+            <path stroke-width="2" stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41" />
+        </svg>
+    {:else}
+        <svg class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+    {/if}
+</button>

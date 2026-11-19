@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "veltra": {
+      "command": "php",
+      "args": ["artisan", "veltra:mcp"]
+    }
+  }
+}

@@ -1,0 +1,173 @@
+<script lang="ts">
+    import { Link } from '@inertiajs/svelte';
+    import {
+        House,
+        ArrowLeft,
+        TriangleAlert,
+        ShieldAlert,
+        FileQuestion,
+        Clock,
+        ServerCrash,
+        Lock,
+    } from '@lucide/svelte';
+
+    let { status = 404 }: { status?: number } = $props();
+
+    interface ErrorConfig {
+        title: string;
+        badge: string;
+        badgeClass: string;
+        description: string;
+        icon: any;
+    }
+
+    const errorConfigs: Record<number, ErrorConfig> = {
+        404: {
+            title: 'Página No Encontrada',
+            badge: 'Error 404 • Recurso No Encontrado',
+            badgeClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 ring-cyan-200 dark:ring-cyan-800/60',
+            description: 'La página o recurso al que intentas acceder no existe, ha sido movido o ya no se encuentra disponible.',
+            icon: FileQuestion,
+        },
+        403: {
+            title: 'Acceso Restringido',
+            badge: 'Error 403 • Acceso Denegado',
+            badgeClass: 'bg-amber-50 dark:bg-amber-950/60 text-amber-700 dark:text-amber-300 ring-amber-200 dark:ring-amber-800/60',
+            description: 'No cuentas con los permisos o privilegios suficientes para consultar este recurso o sección.',
+            icon: ShieldAlert,
+        },
+        500: {
+            title: 'Error en el Servidor',
+            badge: 'Error 500 • Error Interno',
+            badgeClass: 'bg-rose-50 dark:bg-rose-950/60 text-rose-700 dark:text-rose-300 ring-rose-200 dark:ring-rose-800/60',
+            description: 'Ha ocurrido un error inesperado al procesar tu solicitud. El equipo técnico ha sido notificado.',
+            icon: ServerCrash,
+        },
+        419: {
+            title: 'Tu Sesión ha Expirado',
+            badge: 'Error 419 • Token CSRF Expirado',
+            badgeClass: 'bg-indigo-50 dark:bg-indigo-950/60 text-indigo-700 dark:text-indigo-300 ring-indigo-200 dark:ring-indigo-800/60',
+            description: 'Por motivos de seguridad corporativa, el token de formulario ha caducado. Por favor recarga la página o ingresa de nuevo.',
+            icon: Clock,
+        },
+        503: {
+            title: 'Plataforma en Mantenimiento',
+            badge: 'Error 503 • Mantenimiento Preventivo',
+            badgeClass: 'bg-sky-50 dark:bg-sky-950/60 text-sky-700 dark:text-sky-300 ring-sky-200 dark:ring-sky-800/60',
+            description: 'Estamos realizando labores de optimización y mantenimiento programado. Los servicios se restablecerán a la brevedad.',
+            icon: TriangleAlert,
+        },
+        401: {
+            title: 'Autenticación Requerida',
+            badge: 'Error 401 • Autenticación Requerida',
+            badgeClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 ring-cyan-200 dark:ring-cyan-800/60',
+            description: 'Debes autenticarte con tus credenciales de usuario para poder acceder y visualizar esta sección.',
+            icon: Lock,
+        },
+    };
+
+    let currentConfig = $derived(
+        errorConfigs[status] || {
+            title: 'Error Inesperado',
+            badge: `Error ${status} • Notificación del Sistema`,
+            badgeClass: 'bg-cyan-50 dark:bg-cyan-950/60 text-cyan-700 dark:text-cyan-300 ring-cyan-200 dark:ring-cyan-800/60',
+            description: 'Ocurrió un error inesperado al procesar tu solicitud. Por favor intenta de nuevo más tarde.',
+            icon: TriangleAlert,
+        }
+    );
+
+    let IconComponent = $derived(currentConfig.icon);
+
+    function goBack() {
+        if (window.history.length > 1) {
+            window.history.back();
+        } else {
+            window.location.assign('/');
+        }
+    }
+</script>
+
+<svelte:head>
+    <title>{status} — {currentConfig.title}</title>
+</svelte:head>
+
+<div class="min-h-screen flex flex-col justify-between bg-slate-50 dark:bg-[#060913] text-slate-800 dark:text-slate-100 antialiased relative overflow-x-hidden selection:bg-cyan-500 selection:text-white">
+
+    <!-- Luces Ambientales Cyan -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[850px] h-[380px] bg-cyan-500/10 dark:bg-cyan-500/15 blur-[130px] rounded-full pointer-events-none -z-10"></div>
+    <div class="fixed -bottom-28 left-1/2 -translate-x-1/2 w-[700px] h-[350px] bg-cyan-600/5 dark:bg-cyan-600/10 blur-[120px] rounded-full pointer-events-none -z-10"></div>
+
+    <!-- Header Superior -->
+    <header class="w-full max-w-7xl mx-auto px-6 py-6 flex items-center justify-between z-10">
+        <Link href="/" class="inline-flex items-center gap-2.5 group transition-transform hover:scale-105">
+            <img
+                src="/vendor/veltra/img/logo.png"
+                alt="VeltraUI"
+                class="w-8 h-8 rounded-xl object-contain shadow-xs"
+            />
+            <span class="text-xl font-black text-slate-900 dark:text-white tracking-tight">
+                Veltra<span class="text-cyan-500">UI</span>
+            </span>
+        </Link>
+    </header>
+
+    <!-- Contenedor Central -->
+    <main class="flex-1 flex items-center justify-center px-4 py-12 z-10">
+        <div class="w-full max-w-xl mx-auto p-8 sm:p-12 rounded-3xl bg-white/80 dark:bg-slate-900/80 backdrop-blur-xl border border-slate-200/80 dark:border-slate-800 shadow-2xl shadow-cyan-500/5 relative text-center">
+            
+            <!-- Glow Interior -->
+            <div class="absolute -top-16 left-1/2 -translate-x-1/2 w-48 h-48 bg-cyan-500/10 dark:bg-cyan-500/20 blur-3xl rounded-full pointer-events-none"></div>
+
+            <!-- Badge Superior -->
+            <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full text-xs font-semibold ring-1 ring-inset mb-6 {currentConfig.badgeClass}">
+                <IconComponent class="w-3.5 h-3.5" />
+                <span>{currentConfig.badge}</span>
+            </div>
+
+            <!-- Código Grande -->
+            <div class="text-7xl sm:text-8xl md:text-9xl font-black font-mono tracking-tighter bg-gradient-to-br from-cyan-400 via-cyan-500 to-teal-400 dark:from-cyan-300 dark:via-cyan-400 dark:to-teal-400 bg-clip-text text-transparent select-none drop-shadow-sm leading-none mb-4">
+                {status}
+            </div>
+
+            <!-- Título -->
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-slate-900 dark:text-white tracking-tight mb-3">
+                {currentConfig.title}
+            </h1>
+
+            <!-- Descripción -->
+            <p class="text-sm sm:text-base text-slate-500 dark:text-slate-400 leading-relaxed max-w-md mx-auto mb-8">
+                {currentConfig.description}
+            </p>
+
+            <!-- Acciones -->
+            <div class="flex flex-col sm:flex-row items-center justify-center gap-3">
+                <Link
+                    href="/dashboard"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-6 py-2.5 rounded-xl bg-gradient-to-r from-cyan-500 to-cyan-600 hover:from-cyan-400 hover:to-cyan-500 text-white font-semibold text-xs uppercase tracking-wider shadow-lg shadow-cyan-500/25 transition-all transform hover:-translate-y-0.5 cursor-pointer"
+                >
+                    <House class="w-4 h-4" />
+                    <span>Ir al Dashboard</span>
+                </Link>
+
+                <button
+                    type="button"
+                    onclick={goBack}
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700/80 text-slate-700 dark:text-slate-300 font-semibold text-xs uppercase tracking-wider border border-slate-200 dark:border-slate-700/60 transition-all cursor-pointer"
+                >
+                    <ArrowLeft class="w-4 h-4" />
+                    <span>Regresar</span>
+                </button>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full max-w-7xl mx-auto px-6 py-6 text-center text-xs text-slate-400 dark:text-slate-600 z-10 flex flex-col sm:flex-row items-center justify-between gap-2 border-t border-slate-200/40 dark:border-slate-800/40">
+        <div>
+            <span>VeltraUI Suite</span> &bull; <span>Svelte 5 + Inertia</span>
+        </div>
+        <div>
+            &copy; {new Date().getFullYear()} VeltraUI Suite. Todos los derechos reservados.
+        </div>
+    </footer>
+</div>

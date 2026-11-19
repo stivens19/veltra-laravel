@@ -1,0 +1,87 @@
+<script setup>
+import { ref, onMounted, onUnmounted, watch } from 'vue';
+import { usePage } from '@inertiajs/vue3';
+import Sidebar from '@/components/Organisms/Sidebar.vue';
+import Header from '@/components/Organisms/Header.vue';
+
+const page = usePage();
+const user = page.props.auth?.user || { name: 'Usuario', email: 'user@example.com' };
+
+const sidebarOpen = ref(false);
+const sidebarCollapsed = ref(false);
+
+onMounted(() => {
+    try {
+        sidebarCollapsed.value = localStorage.getItem('veltra-sidebar-collapsed') === 'true';
+        if (sidebarCollapsed.value) {
+            document.body.classList.add('vlt-sidebar-collapsed');
+        }
+    } catch (e) {}
+
+    const handleResize = () => {
+        if (window.innerWidth >= 1024 && sidebarOpen.value) {
+            sidebarOpen.value = false;
+        }
+    };
+    window.addEventListener('resize', handleResize);
+    onUnmounted(() => window.removeEventListener('resize', handleResize));
+});
+
+watch(sidebarCollapsed, (val) => {
+    try {
+        localStorage.setItem('veltra-sidebar-collapsed', String(val));
+        if (val) {
+            document.body.classList.add('vlt-sidebar-collapsed');
+        } else {
+            document.body.classList.remove('vlt-sidebar-collapsed');
+        }
+    } catch (e) {}
+});
+
+const toggleSidebarMobile = () => {
+    sidebarOpen.value = !sidebarOpen.value;
+};
+
+const toggleSidebarCollapse = () => {
+    sidebarCollapsed.value = !sidebarCollapsed.value;
+};
+</script>
+
+<template>
+    <div :class="['vlt-body', sidebarCollapsed ? 'vlt-sidebar-collapsed' : '', 'min-h-screen bg-slate-50 dark:bg-[#060913] text-slate-800 dark:text-slate-100']">
+        <div :class="['vlt-wrapper', sidebarCollapsed ? 'vlt-sidebar-collapsed' : '', sidebarOpen ? 'vlt-sidebar-mobile-open' : '', 'min-h-screen']">
+            <!-- Mobile Backdrop -->
+            <div class="vlt-backdrop" data-vlt-toggle="sidebar" @click="sidebarOpen = false"></div>
+
+            <!-- Sidebar Organism -->
+            <Sidebar :user="user" />
+
+            <!-- Main Content Area -->
+            <div class="vlt-main flex-1 flex flex-col min-w-0 min-h-screen">
+                <!-- Header Organism -->
+                <Header 
+                    :user="user"
+                    @toggle-sidebar="toggleSidebarMobile"
+                    @toggle-collapse="toggleSidebarCollapse"
+                />
+
+                <!-- Content Header if provided -->
+                <div v-if="$slots.header" class="px-6 py-4 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/50">
+                    <slot name="header" />
+                </div>
+
+                <!-- Page Content -->
+                <main class="p-6 flex-1 flex flex-col">
+                    <slot />
+                </main>
+
+                <!-- Global Footer -->
+                <footer class="px-6 py-4 text-xs text-slate-400 border-t border-slate-200/60 dark:border-slate-800/60 text-center sm:text-left mt-auto flex items-center gap-2">
+                    <span>&copy; {{ new Date().getFullYear() }} VeltraUI. Todos los derechos reservados.</span>
+                    <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                    <span class="text-slate-500 font-mono text-[11px]">VeltraLaravel v1.0.0</span>
+                </footer>
+            </div>
+        </div>
+    </div>
+</template>

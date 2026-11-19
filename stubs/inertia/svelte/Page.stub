@@ -1,0 +1,63 @@
+<script lang="ts">
+    import AppLayout from '@/layouts/AppLayout.svelte';
+    import { page } from '@inertiajs/svelte';
+
+    let user = $derived((page.props as any)?.auth?.user || { name: 'User' });
+</script>
+
+<svelte:head>
+    <title>{{ pageTitle }}</title>
+</svelte:head>
+
+<AppLayout>
+    <div slot="header">
+        <section class="vlt-content-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
+            <div>
+                <h1 class="vlt-page-title text-xl font-black text-slate-900 dark:text-white">{{ pageTitle }}</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {{ pageSubtitle }}
+                </p>
+            </div>
+            <nav class="vlt-breadcrumb" aria-label="Breadcrumb">
+                <ol class="flex items-center gap-2 text-xs">
+                    <li><a href="/dashboard" class="text-slate-500 hover:text-cyan-600 font-medium">Home</a></li>
+                    <li><span class="text-slate-300 dark:text-slate-600">/</span></li>
+                    <li class="active font-bold text-cyan-600">{{ pageTitle }}</li>
+                </ol>
+            </nav>
+        </section>
+    </div>
+
+    <div class="w-full">
+        <div class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xs overflow-hidden w-full">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 0 1 1-1h14a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V5zm0 8a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1v-6zm10 0a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v6a1 1 0 0 1-1 1h-4a1 1 0 0 1-1-1v-6z"/></svg>
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">{{ pageTitle }} Workspace</h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Blank canvas ready for development</p>
+                    </div>
+                </div>
+                <span class="vlt-pill vlt-pill-cyan text-xs font-semibold">Ready</span>
+            </div>
+
+            <div class="py-16 px-6 text-center">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4 ring-1 ring-cyan-500/20 shadow-xs">
+                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round" d="M12 6.253v13m0-13C10.832 5.477 9.246 5 7.5 5S4.168 5.477 3 6.253v13C4.168 18.477 5.754 18 7.5 18s3.332.477 4.5 1.253m0-13C13.168 5.477 14.754 5 16.5 5c1.747 0 3.332.477 4.5 1.253v13C19.832 18.477 18.247 18 16.5 18c-1.746 0-3.332.477-4.5 1.253"/></svg>
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    {{ pageTitle }} Module Ready
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed mb-6">
+                    Start adding your Svelte components, forms, tables, and metrics here with VeltraUI.
+                </p>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs font-mono text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                    <span>{{ filePath }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</AppLayout>

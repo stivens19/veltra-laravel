@@ -1,0 +1,92 @@
+<script lang="ts">
+    import { onMount } from 'svelte';
+    import { page } from '@inertiajs/svelte';
+    import Sidebar from '@/components/Organisms/Sidebar.svelte';
+    import Header from '@/components/Organisms/Header.svelte';
+
+    let { header, children }: { header?: any; children?: any } = $props();
+
+    let user = $derived((page.props as any)?.auth?.user || { name: 'Usuario', email: 'user@example.com' });
+
+    let sidebarOpen = $state(false);
+    let sidebarCollapsed = $state(false);
+
+    onMount(() => {
+        try {
+            sidebarCollapsed = localStorage.getItem('veltra-sidebar-collapsed') === 'true';
+            if (sidebarCollapsed) {
+                document.body.classList.add('vlt-sidebar-collapsed');
+            }
+        } catch (e) {}
+
+        const handleResize = () => {
+            if (window.innerWidth >= 1024 && sidebarOpen) {
+                sidebarOpen = false;
+            }
+        };
+        window.addEventListener('resize', handleResize);
+        return () => window.removeEventListener('resize', handleResize);
+    });
+
+    $effect(() => {
+        if (typeof window !== 'undefined') {
+            try {
+                localStorage.setItem('veltra-sidebar-collapsed', String(sidebarCollapsed));
+                if (sidebarCollapsed) {
+                    document.body.classList.add('vlt-sidebar-collapsed');
+                } else {
+                    document.body.classList.remove('vlt-sidebar-collapsed');
+                }
+            } catch (e) {}
+        }
+    });
+
+    function toggleSidebarMobile() {
+        sidebarOpen = !sidebarOpen;
+    }
+
+    function toggleSidebarCollapse() {
+        sidebarCollapsed = !sidebarCollapsed;
+    }
+</script>
+
+<div class="vlt-body {sidebarCollapsed ? 'vlt-sidebar-collapsed' : ''} min-h-screen bg-slate-50 dark:bg-[#060913] text-slate-800 dark:text-slate-100">
+    <div class="vlt-wrapper {sidebarCollapsed ? 'vlt-sidebar-collapsed' : ''} {sidebarOpen ? 'vlt-sidebar-mobile-open' : ''} min-h-screen">
+        <!-- Mobile Backdrop -->
+        <!-- svelte-ignore a11y_click_events_have_key_events -->
+        <!-- svelte-ignore a11y_no_static_element_interactions -->
+        <div class="vlt-backdrop" data-vlt-toggle="sidebar" onclick={() => (sidebarOpen = false)}></div>
+
+        <!-- Sidebar Organism -->
+        <Sidebar {user} />
+
+        <!-- Main Content Area -->
+        <div class="vlt-main flex-1 flex flex-col min-w-0 min-h-screen">
+            <!-- Header Organism -->
+            <Header 
+                {user}
+                on:toggleSidebar={toggleSidebarMobile}
+                on:toggleCollapse={toggleSidebarCollapse}
+            />
+
+            <!-- Content Header if provided -->
+            {#if header}
+                <div class="px-6 py-4 border-b border-slate-200/60 dark:border-slate-800/60 bg-white/50 dark:bg-slate-900/50">
+                    {@render header()}
+                </div>
+            {/if}
+
+            <!-- Page Content -->
+            <main class="p-6 flex-1 flex flex-col">
+                {@render children?.()}
+            </main>
+
+            <!-- Global Footer -->
+            <footer class="px-6 py-4 text-xs text-slate-400 border-t border-slate-200/60 dark:border-slate-800/60 text-center sm:text-left mt-auto flex items-center gap-2">
+                <span>&copy; {new Date().getFullYear()} VeltraUI. Todos los derechos reservados.</span>
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+                <span class="text-slate-500 font-mono text-[11px]">VeltraLaravel v1.0.0</span>
+            </footer>
+        </div>
+    </div>
+</div>

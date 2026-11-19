@@ -1,0 +1,231 @@
+<script setup lang="ts">
+import { ref } from 'vue';
+import { Head, Link, useForm, usePage } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { User, Mail, Save, Check, AlertTriangle, Trash2 } from '@lucide/vue';
+
+defineOptions({
+    layout: [AppLayout, SettingsLayout],
+});
+
+const props = defineProps<{
+    mustVerifyEmail?: boolean;
+    status?: string;
+}>();
+
+const page = usePage();
+const user = (page.props as any).auth?.user || { name: 'Usuario', email: 'user@example.com' };
+
+// 1. Profile Form
+const profileForm = useForm({
+    name: user.name,
+    email: user.email,
+});
+
+const updateProfile = () => {
+    profileForm.patch('/settings/profile', {
+        preserveScroll: true,
+    });
+};
+
+// 2. Delete Account Dialog State
+const confirmingUserDeletion = ref(false);
+const deletePasswordInput = ref<HTMLInputElement | null>(null);
+
+const deleteForm = useForm({
+    password: '',
+});
+
+const confirmDelete = () => {
+    confirmingUserDeletion.value = true;
+    setTimeout(() => deletePasswordInput.value?.focus(), 100);
+};
+
+const closeModal = () => {
+    confirmingUserDeletion.value = false;
+    deleteForm.clearErrors();
+    deleteForm.reset();
+};
+
+const deleteAccount = () => {
+    deleteForm.delete('/settings/profile', {
+        preserveScroll: true,
+        onSuccess: () => closeModal(),
+        onError: () => deletePasswordInput.value?.focus(),
+        onFinish: () => deleteForm.reset(),
+    });
+};
+</script>
+
+<template>
+    <Head title="Perfil" />
+
+    <div class="space-y-6">
+        <!-- 1. Información del Perfil -->
+        <div id="profile" class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <User class="w-4 h-4 text-cyan-500" />
+                        Información Personal
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Actualiza el nombre completo y la dirección de correo de tu cuenta.
+                    </p>
+                </div>
+                <span
+                    v-if="status === 'profile-updated'"
+                    class="vlt-pill vlt-pill-emerald text-xs font-semibold py-1 px-3 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1"
+                >
+                    <Check class="w-3.5 h-3.5" />
+                    Perfil Guardado
+                </span>
+            </div>
+
+            <form @submit.prevent="updateProfile" class="space-y-4 max-w-xl">
+                <div>
+                    <label for="name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Nombre Completo <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <User class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            id="name"
+                            v-model="profileForm.name"
+                            type="text"
+                            required
+                            autocomplete="name"
+                            class="w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors"
+                            :class="profileForm.errors.name ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'"
+                        />
+                    </div>
+                    <p v-if="profileForm.errors.name" class="text-[11px] font-semibold text-rose-500 mt-1">
+                        {{ profileForm.errors.name }}
+                    </p>
+                </div>
+
+                <div>
+                    <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Correo Electrónico <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <Mail class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            id="email"
+                            v-model="profileForm.email"
+                            type="email"
+                            required
+                            autocomplete="username"
+                            class="w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors"
+                            :class="profileForm.errors.email ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'"
+                        />
+                    </div>
+                    <p v-if="profileForm.errors.email" class="text-[11px] font-semibold text-rose-500 mt-1">
+                        {{ profileForm.errors.email }}
+                    </p>
+                </div>
+
+                <div class="pt-2">
+                    <button
+                        type="submit"
+                        :disabled="profileForm.processing"
+                        class="px-4 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                    >
+                        <Save class="w-3.5 h-3.5" />
+                        <span>{{ profileForm.processing ? 'Guardando...' : 'Guardar Cambios' }}</span>
+                    </button>
+                </div>
+            </form>
+        </div>
+
+        <!-- 2. Eliminar Cuenta -->
+        <div id="danger-zone" class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                <div>
+                    <h3 class="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                        <Trash2 class="w-4 h-4 text-rose-500" />
+                        Eliminar Cuenta
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Una vez que tu cuenta sea eliminada, todos sus recursos y datos serán borrados permanentemente.
+                    </p>
+                </div>
+            </div>
+
+            <div class="space-y-4 max-w-xl">
+                <div class="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200 text-xs">
+                    <div class="flex items-center gap-2 font-bold mb-1">
+                        <AlertTriangle class="w-4 h-4 text-rose-500" />
+                        <span>Advertencia Crítica</span>
+                    </div>
+                    Antes de eliminar tu cuenta, descarga cualquier dato o información relevante que desees conservar.
+                </div>
+
+                <button
+                    type="button"
+                    @click="confirmDelete"
+                    class="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                >
+                    <Trash2 class="w-3.5 h-3.5" />
+                    <span>Eliminar Cuenta Definitivamente</span>
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal de Confirmación de Eliminación de Cuenta -->
+    <div
+        v-if="confirmingUserDeletion"
+        class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs"
+    >
+        <div class="vlt-card border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+            <div class="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                <div class="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center">
+                    <AlertTriangle class="w-5 h-5" />
+                </div>
+                <div>
+                    <h4 class="text-sm font-bold text-slate-900 dark:text-white">¿Confirmas la eliminación?</h4>
+                    <p class="text-[11px] text-slate-500 dark:text-slate-400">Esta acción es irreversible.</p>
+                </div>
+            </div>
+
+            <p class="text-xs text-slate-600 dark:text-slate-300">
+                Por favor ingresa tu contraseña para confirmar que deseas eliminar tu cuenta permanentemente.
+            </p>
+
+            <form @submit.prevent="deleteAccount" class="space-y-4">
+                <div>
+                    <input
+                        ref="deletePasswordInput"
+                        v-model="deleteForm.password"
+                        type="password"
+                        placeholder="Ingresa tu contraseña"
+                        class="w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-rose-500 text-slate-800 dark:text-slate-100 transition-colors"
+                        :class="deleteForm.errors.password ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'"
+                    />
+                    <p v-if="deleteForm.errors.password" class="text-[11px] font-semibold text-rose-500 mt-1">
+                        {{ deleteForm.errors.password }}
+                    </p>
+                </div>
+
+                <div class="flex items-center justify-end gap-2 pt-2">
+                    <button
+                        type="button"
+                        @click="closeModal"
+                        class="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        type="submit"
+                        :disabled="deleteForm.processing"
+                        class="px-4 py-1.5 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-50 cursor-pointer"
+                    >
+                        {{ deleteForm.processing ? 'Eliminando...' : 'Sí, eliminar' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</template>

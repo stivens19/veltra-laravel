@@ -1,0 +1,340 @@
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue';
+import { Head, useForm, router, Form } from '@inertiajs/vue3';
+import AppLayout from '@/layouts/AppLayout.vue';
+import SettingsLayout from '@/layouts/settings/Layout.vue';
+import { Key, Lock, Check, Save, Shield, ShieldAlert, ShieldCheck, KeyRound, Trash2 } from '@lucide/vue';
+import TwoFactorSetupModal from '@/components/TwoFactorSetupModal.vue';
+import TwoFactorRecoveryCodes from '@/components/TwoFactorRecoveryCodes.vue';
+import PasskeyRegister from '@/components/PasskeyRegister.vue';
+import { useTwoFactorAuth } from '@/composables/useTwoFactorAuth';
+import { disable, enable } from '@/routes/two-factor';
+
+defineOptions({
+    layout: [AppLayout, SettingsLayout],
+});
+
+const props = withDefaults(
+    defineProps<{
+        passwordRules?: string;
+        canManageTwoFactor?: boolean;
+        twoFactorEnabled?: boolean;
+        requiresConfirmation?: boolean;
+        canManagePasskeys?: boolean;
+        passkeys?: any[];
+    }>(),
+    {
+        canManageTwoFactor: false,
+        twoFactorEnabled: false,
+        requiresConfirmation: false,
+        canManagePasskeys: false,
+        passkeys: () => [],
+    }
+);
+
+// 1. Password Form
+const passwordInput = ref<HTMLInputElement | null>(null);
+const currentPasswordInput = ref<HTMLInputElement | null>(null);
+
+const form = useForm({
+    current_password: '',
+    password: '',
+    password_confirmation: '',
+});
+
+const updatePassword = () => {
+    form.put('/settings/password', {
+        preserveScroll: true,
+        onSuccess: () => form.reset(),
+        onError: () => {
+            if (form.errors.password) {
+                form.reset('password', 'password_confirmation');
+                passwordInput.value?.focus();
+            }
+            if (form.errors.current_password) {
+                form.reset('current_password');
+                currentPasswordInput.value?.focus();
+            }
+        },
+    });
+};
+
+// 2. 2FA Setup & Management
+const { hasSetupData, clearTwoFactorAuthData, fetchSetupData } = useTwoFactorAuth();
+const showSetupModal = ref<boolean>(false);
+
+onMounted(async () => {
+    if (props.canManageTwoFactor && !props.twoFactorEnabled) {
+        await fetchSetupData();
+    }
+});
+
+onUnmounted(() => {
+    clearTwoFactorAuthData();
+});
+
+// 3. Passkeys Delete & Register
+const deletingPasskeyId = ref<number | null>(null);
+
+const deletePasskey = (id: number) => {
+    if (!confirm('¿Estás seguro de que deseas eliminar esta llave de acceso?')) return;
+    deletingPasskeyId.value = id;
+    router.delete(`/user/passkeys/${id}`, {
+        preserveScroll: true,
+        onFinish: () => {
+            deletingPasskeyId.value = null;
+        },
+    });
+};
+
+const handlePasskeySuccess = () => {
+    router.reload({ preserveScroll: true });
+};
+</script>
+
+<template>
+    <Head title="Seguridad" />
+
+    <div class="space-y-6">
+        <!-- 1. Password Update Card -->
+        <div class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Key class="w-4 h-4 text-amber-500" />
+                        Actualizar Contraseña
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Asegúrate de utilizar una contraseña segura y difícil de predecir.
+                    </p>
+                </div>
+            </div>
+
+            <form @submit.prevent="updatePassword" class="space-y-4 max-w-xl">
+                <!-- Current Password -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Contraseña Actual <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <Lock class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            ref="currentPasswordInput"
+                            type="password"
+                            v-model="form.current_password"
+                            autocomplete="current-password"
+                            placeholder="••••••••"
+                            :class="[
+                                'w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors',
+                                form.errors.current_password ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                            ]"
+                        />
+                    </div>
+                    <p v-if="form.errors.current_password" class="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                        <ShieldAlert class="w-3.5 h-3.5" />
+                        {{ form.errors.current_password }}
+                    </p>
+                </div>
+
+                <!-- New Password -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Nueva Contraseña <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <Lock class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            ref="passwordInput"
+                            type="password"
+                            v-model="form.password"
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                            :class="[
+                                'w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors',
+                                form.errors.password ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                            ]"
+                        />
+                    </div>
+                    <p v-if="form.errors.password" class="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                        <ShieldAlert class="w-3.5 h-3.5" />
+                        {{ form.errors.password }}
+                    </p>
+                </div>
+
+                <!-- Confirm Password -->
+                <div>
+                    <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                        Confirmar Nueva Contraseña <span class="text-rose-500">*</span>
+                    </label>
+                    <div class="relative">
+                        <Lock class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            type="password"
+                            v-model="form.password_confirmation"
+                            autocomplete="new-password"
+                            placeholder="••••••••"
+                            :class="[
+                                'w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors',
+                                form.errors.password_confirmation ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                            ]"
+                        />
+                    </div>
+                    <p v-if="form.errors.password_confirmation" class="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                        <ShieldAlert class="w-3.5 h-3.5" />
+                        {{ form.errors.password_confirmation }}
+                    </p>
+                </div>
+
+                <!-- Actions -->
+                <div class="flex items-center gap-3 pt-2">
+                    <button
+                        type="submit"
+                        :disabled="form.processing"
+                        class="py-2.5 px-5 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 text-white font-bold text-xs flex items-center gap-2 shadow-md shadow-cyan-500/20 cursor-pointer transition-all disabled:opacity-50"
+                    >
+                        <Save class="w-3.5 h-3.5" />
+                        <span>Guardar Contraseña</span>
+                    </button>
+
+                    <span v-if="form.recentlySuccessful" class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center gap-1">
+                        <Check class="w-3.5 h-3.5" />
+                        Guardado correctamente.
+                    </span>
+                </div>
+            </form>
+        </div>
+
+        <!-- 2. Two-Factor Authentication Card -->
+        <div v-if="canManageTwoFactor" class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <Shield class="w-4 h-4 text-emerald-500" />
+                        Autenticación en Dos Pasos (2FA)
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Añade una capa adicional de protección a tu cuenta mediante autenticador móvil.
+                    </p>
+                </div>
+                <span :class="['vlt-pill text-xs font-semibold py-1 px-3', twoFactorEnabled ? 'vlt-pill-emerald' : 'vlt-pill-amber']">
+                    <span class="pill-dot"></span>
+                    {{ twoFactorEnabled ? '2FA Activado' : '2FA Desactivado' }}
+                </span>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-50 dark:bg-slate-800/50 border border-slate-200/70 dark:border-slate-700">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200">
+                            {{ twoFactorEnabled ? 'Tu cuenta está protegida con 2FA' : 'Protege tu cuenta con verificación de dos pasos' }}
+                        </h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1 max-w-lg">
+                            {{ twoFactorEnabled ? 'Se te solicitará un código generado por tu app de autenticación (Google Authenticator, Authy, 1Password) al iniciar sesión.' : 'Al activar 2FA, se generará un código QR que podrás escanear con cualquier aplicación TOTP.' }}
+                        </p>
+                    </div>
+
+                    <div v-if="twoFactorEnabled" class="shrink-0">
+                        <Form v-bind="disable.form()" #default="{ processing }">
+                            <button
+                                type="submit"
+                                :disabled="processing"
+                                class="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <ShieldAlert class="w-3.5 h-3.5" />
+                                <span>{{ processing ? 'Desactivando...' : 'Desactivar 2FA' }}</span>
+                            </button>
+                        </Form>
+                    </div>
+
+                    <div v-else class="shrink-0">
+                        <button
+                            v-if="hasSetupData"
+                            type="button"
+                            @click="showSetupModal = true"
+                            class="px-4 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white shadow-xs shadow-cyan-500/20 transition-colors cursor-pointer shrink-0 flex items-center gap-2"
+                        >
+                            <ShieldCheck class="w-3.5 h-3.5" />
+                            <span>Continuar Configuración 2FA</span>
+                        </button>
+                        <Form
+                            v-else
+                            v-bind="enable.form()"
+                            @success="showSetupModal = true"
+                            #default="{ processing }"
+                        >
+                            <button
+                                type="submit"
+                                :disabled="processing"
+                                class="px-4 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white shadow-xs shadow-cyan-500/20 transition-colors cursor-pointer shrink-0 disabled:opacity-50 flex items-center gap-2"
+                            >
+                                <Shield class="w-3.5 h-3.5" />
+                                <span>{{ processing ? 'Iniciando...' : 'Activar 2FA Ahora' }}</span>
+                            </button>
+                        </Form>
+                    </div>
+                </div>
+
+                <!-- Recovery Codes section if 2FA is active -->
+                <div v-if="twoFactorEnabled" class="mt-5 pt-5 border-t border-slate-200/60 dark:border-slate-700/60">
+                    <TwoFactorRecoveryCodes />
+                </div>
+            </div>
+
+            <!-- Modal for QR setup and TOTP code verification -->
+            <TwoFactorSetupModal
+                v-model:isOpen="showSetupModal"
+                :requiresConfirmation="requiresConfirmation"
+                :twoFactorEnabled="twoFactorEnabled"
+            />
+        </div>
+
+        <!-- 3. Passkeys (Llaves biométricas) Card -->
+        <div v-if="canManagePasskeys" class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+            <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                <div>
+                    <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                        <KeyRound class="w-4 h-4 text-cyan-500" />
+                        Passkeys (Llaves de Acceso)
+                    </h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                        Gestiona tus llaves biométricas o de seguridad (FaceID, TouchID, Windows Hello) para iniciar sesión sin contraseña.
+                    </p>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <div v-if="passkeys.length === 0" class="py-6 text-center rounded-xl bg-slate-50/50 dark:bg-slate-800/30 border border-slate-100 dark:border-slate-800">
+                    <KeyRound class="w-8 h-8 text-slate-400 mx-auto mb-2 opacity-60" />
+                    <p class="text-xs font-bold text-slate-700 dark:text-slate-300">No tienes passkeys registradas</p>
+                    <p class="text-[11px] text-slate-400 mt-0.5">Añade una llave para iniciar sesión rápidamente sin escribir contraseña.</p>
+                </div>
+                <div v-else class="divide-y divide-slate-100 dark:divide-slate-800">
+                    <div v-for="passkey in passkeys" :key="passkey.id" class="py-3 flex items-center justify-between">
+                        <div>
+                            <p class="text-xs font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                <KeyRound class="w-3.5 h-3.5 text-cyan-500" />
+                                {{ passkey.name }}
+                            </p>
+                            <p class="text-[10px] text-slate-400 mt-0.5">
+                                Creada {{ passkey.created_at_diff }}
+                                <span v-if="passkey.last_used_at_diff"> · Último uso {{ passkey.last_used_at_diff }}</span>
+                            </p>
+                        </div>
+                        <button
+                            type="button"
+                            @click="deletePasskey(passkey.id)"
+                            :disabled="deletingPasskeyId === passkey.id"
+                            class="text-xs font-semibold text-rose-500 hover:text-rose-600 transition-colors p-1"
+                        >
+                            <Trash2 class="w-4 h-4" />
+                        </button>
+                    </div>
+                </div>
+
+                <div class="pt-2">
+                    <PasskeyRegister @success="handlePasskeySuccess" />
+                </div>
+            </div>
+        </div>
+    </div>
+</template>

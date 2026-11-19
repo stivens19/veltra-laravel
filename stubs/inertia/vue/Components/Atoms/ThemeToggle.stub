@@ -1,0 +1,57 @@
+<script setup>
+import { ref, onMounted, onUnmounted } from 'vue';
+
+const isDark = ref(false);
+
+const checkTheme = () => {
+    const currentTheme = document.documentElement.getAttribute('data-theme') || 
+        (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+    isDark.value = currentTheme === 'dark';
+};
+
+let observer = null;
+
+onMounted(() => {
+    checkTheme();
+    observer = new MutationObserver(checkTheme);
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+});
+
+onUnmounted(() => {
+    if (observer) observer.disconnect();
+});
+
+const toggleTheme = () => {
+    const nextTheme = isDark.value ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', nextTheme);
+    if (nextTheme === 'dark') {
+        document.documentElement.classList.add('dark');
+    } else {
+        document.documentElement.classList.remove('dark');
+    }
+    try {
+        localStorage.setItem('veltra-theme', nextTheme);
+        localStorage.setItem('appearance', nextTheme);
+        document.cookie = `appearance=${nextTheme};path=/;max-age=31536000;SameSite=Lax`;
+    } catch (e) {}
+    isDark.value = !isDark.value;
+};
+</script>
+
+<template>
+    <button
+        type="button"
+        @click="toggleTheme"
+        aria-label="Alternar Modo Oscuro / Claro"
+        title="Alternar Modo Oscuro / Claro"
+        class="vlt-btn-icon cursor-pointer"
+    >
+        <svg v-if="isDark" class="w-4 h-4 text-amber-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <circle cx="12" cy="12" r="4" stroke-width="2" />
+            <path stroke-width="2" stroke-linecap="round" d="M12 2v2m0 16v2M4.93 4.93l1.41 1.41m11.32 11.32 1.41 1.41M2 12h2m16 0h2M6.34 17.66l-1.41 1.41m14.14-14.14-1.41 1.41" />
+        </svg>
+        <svg v-else class="w-4 h-4 text-cyan-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />
+        </svg>
+    </button>
+</template>

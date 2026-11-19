@@ -1,0 +1,126 @@
+<script lang="ts">
+    import { onMount } from 'svelte';
+    import SettingsLayout from '@/layouts/settings/Layout.svelte';
+    import { Sparkles, Sun, Moon, Monitor, Check } from '@lucide/svelte';
+
+    let currentTheme = $state('system');
+
+    onMount(() => {
+        currentTheme = localStorage.getItem('veltra-theme') || localStorage.getItem('appearance') || 'system';
+    });
+
+    function setTheme(theme: string) {
+        currentTheme = theme;
+        let effective = theme;
+        if (theme === 'system') {
+            effective = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        document.documentElement.setAttribute('data-theme', effective);
+        if (effective === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+
+        try {
+            localStorage.setItem('veltra-theme', theme);
+            localStorage.setItem('appearance', theme);
+            document.cookie = `appearance=${theme};path=/;max-age=31536000;SameSite=Lax`;
+        } catch (e) {}
+
+        window.dispatchEvent(new CustomEvent('veltra:theme:changed', { detail: { theme } }));
+    }
+</script>
+
+<svelte:head>
+    <title>Apariencia</title>
+</svelte:head>
+
+<div class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+    <div class="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+        <div>
+            <h3 class="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                <Sparkles class="w-4 h-4 text-cyan-500" />
+                Personalización de Tema
+            </h3>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                Selecciona el esquema de color preferido para la interfaz de VeltraUI.
+            </p>
+        </div>
+    </div>
+
+    <div class="space-y-4 max-w-2xl">
+        <p class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed">
+            El modo seleccionado se sincronizará automáticamente con todas las vistas, componentes y la barra superior de VeltraUI.
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
+            <!-- Light Theme -->
+            <button
+                type="button"
+                onclick={() => setTheme('light')}
+                class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group {currentTheme === 'light'
+                    ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'}"
+            >
+                {#if currentTheme === 'light'}
+                    <div class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs">
+                        <Check class="w-3 h-3 stroke-[3]" />
+                    </div>
+                {/if}
+
+                <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Sun class="w-6 h-6" />
+                </div>
+
+                <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">Claro</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Modo diurno nítido</span>
+            </button>
+
+            <!-- Dark Theme -->
+            <button
+                type="button"
+                onclick={() => setTheme('dark')}
+                class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group {currentTheme === 'dark'
+                    ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'}"
+            >
+                {#if currentTheme === 'dark'}
+                    <div class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs">
+                        <Check class="w-3 h-3 stroke-[3]" />
+                    </div>
+                {/if}
+
+                <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Moon class="w-6 h-6" />
+                </div>
+
+                <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">Oscuro</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Alto contraste Slate</span>
+            </button>
+
+            <!-- System Theme -->
+            <button
+                type="button"
+                onclick={() => setTheme('system')}
+                class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group {currentTheme === 'system'
+                    ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10'
+                    : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'}"
+            >
+                {#if currentTheme === 'system'}
+                    <div class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs">
+                        <Check class="w-3 h-3 stroke-[3]" />
+                    </div>
+                {/if}
+
+                <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-400 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                    <Monitor class="w-6 h-6" />
+                </div>
+
+                <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">Sistema</span>
+                <span class="text-[11px] text-slate-500 dark:text-slate-400">Preferencia del SO</span>
+            </button>
+        </div>
+    </div>
+</div>

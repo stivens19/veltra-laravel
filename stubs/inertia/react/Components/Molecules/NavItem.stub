@@ -1,0 +1,27 @@
+import React from 'react';
+import { Link } from '@inertiajs/react';
+
+export default function NavItem({ href = '#', active = false, icon, children, badge = null, className = '' }) {
+    return (
+        <li className={`vlt-nav-item ${className}`}>
+            <Link 
+                href={href} 
+                className={`vlt-nav-link flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors ${
+                    active 
+                        ? 'active bg-cyan-500 !text-white font-bold shadow-xs' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+                }`}
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    {icon && <span className={`vlt-nav-icon shrink-0 ${active ? '!text-white' : ''}`}>{icon}</span>}
+                    <span className={`vlt-nav-text truncate ${active ? '!text-white font-bold' : ''}`}>{children}</span>
+                </div>
+                {badge && (
+                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${active ? 'bg-white/20 !text-white' : 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400'}`}>
+                        {badge}
+                    </span>
+                )}
+            </Link>
+        </li>
+    );
+}

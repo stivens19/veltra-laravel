@@ -1,0 +1,198 @@
+<script lang="ts">
+    import { createEventDispatcher } from 'svelte';
+    import { page, Link } from '@inertiajs/svelte';
+    import ThemeToggle from '../Atoms/ThemeToggle.svelte';
+    import {
+        Menu,
+        Gauge,
+        User,
+        Search,
+        Bell,
+        Maximize,
+        ChevronDown,
+        Shield,
+        LogOut,
+    } from '@lucide/svelte';
+
+    let {
+        user = { name: 'Usuario', email: 'user@example.com' }
+    }: {
+        user?: { name: string; email: string };
+    } = $props();
+
+    const dispatch = createEventDispatcher();
+    let userDropdown = $state(false);
+    let notificationsDropdown = $state(false);
+
+    function normalizePath(url: string | null | undefined): string {
+        if (!url || url === '#') return '';
+        try {
+            const path = new URL(url, 'http://localhost').pathname;
+            return ('/' + path.replace(/^\/+|\/+$/g, '')) || '/';
+        } catch {
+            return ('/' + String(url).replace(/^\/+|\/+$/g, '')) || '/';
+        }
+    }
+
+    let currentUrl = $derived(normalizePath(page.url));
+    let isDashboard = $derived(currentUrl === '/dashboard' || currentUrl === '/');
+    let isProfile = $derived(currentUrl.startsWith('/settings') || currentUrl.startsWith('/profile'));
+
+    let userInitial = $derived((user?.name || page.props.auth?.user?.name || 'U').charAt(0).toUpperCase());
+    let userName = $derived(user?.name || page.props.auth?.user?.name || 'Usuario');
+    let userEmail = $derived(user?.email || page.props.auth?.user?.email || 'admin@example.com');
+
+    function toggleFullscreen() {
+        if (!document.fullscreenElement) {
+            document.documentElement.requestFullscreen?.().catch(() => {});
+        } else {
+            document.exitFullscreen?.().catch(() => {});
+        }
+    }
+
+    function handleToggle(e: Event) {
+        e?.preventDefault?.();
+        if (typeof window !== 'undefined' && window.innerWidth < 1024) {
+            dispatch('toggleSidebar');
+        } else {
+            dispatch('toggleCollapse');
+        }
+    }
+</script>
+
+<header class="vlt-header border-b border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md px-4 py-2.5 flex items-center justify-between">
+    <!-- Left Controls: Hamburger, Quick Nav Pills, Search -->
+    <div class="flex items-center gap-3">
+        <!-- Responsive Sidebar Toggle Button (Mobile Drawer & Desktop Collapse) -->
+        <button
+            type="button"
+            onclick={handleToggle}
+            data-vlt-toggle="sidebar"
+            aria-label="Colapsar Menú"
+            title="Colapsar Menú"
+            class="p-2 rounded-xl text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+            <Menu class="w-4 h-4" />
+        </button>
+
+        <!-- Segmented Quick Nav Pills -->
+        <div class="hidden sm:flex items-center gap-1 bg-slate-100 dark:bg-slate-800/80 p-1 rounded-xl border border-slate-200 dark:border-slate-700">
+            <Link
+                href="/dashboard"
+                class="px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1.5 transition-colors cursor-pointer {isDashboard ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700'}"
+            >
+                <Gauge class="w-3.5 h-3.5 {isDashboard ? 'text-cyan-500' : 'text-slate-400'}" />
+                <span>Dashboard</span>
+            </Link>
+            <Link
+                href="/settings/profile"
+                class="px-3 py-1 text-xs rounded-lg font-semibold flex items-center gap-1.5 transition-colors cursor-pointer {isProfile ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-xs font-bold' : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-white/80 dark:hover:bg-slate-700'}"
+            >
+                <User class="w-3.5 h-3.5 {isProfile ? 'text-cyan-500' : 'text-slate-400'}" />
+                <span>Perfil</span>
+            </Link>
+        </div>
+
+        <!-- Search Button -->
+        <button
+            type="button"
+            title="Buscar (Ctrl+K)"
+            class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+            <Search class="w-4 h-4" />
+        </button>
+    </div>
+
+    <!-- Right Controls: Notifications, Fullscreen, Theme, User Profile -->
+    <div class="flex items-center gap-2 sm:gap-2.5">
+        <!-- Notifications Bell with Yellow Dot -->
+        <div class="relative">
+            <button
+                type="button"
+                onclick={() => notificationsDropdown = !notificationsDropdown}
+                title="Notificaciones"
+                class="p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors relative cursor-pointer"
+            >
+                <Bell class="w-4 h-4" />
+                <span class="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-amber-400 ring-2 ring-white dark:ring-slate-900"></span>
+            </button>
+
+            {#if notificationsDropdown}
+                <div class="absolute right-0 mt-2 w-72 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-3 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div class="px-4 pb-2 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
+                        <span class="text-xs font-bold text-slate-900 dark:text-white">Notificaciones</span>
+                        <span class="text-[10px] font-semibold text-cyan-600 dark:text-cyan-400 bg-cyan-500/10 px-2 py-0.5 rounded-full">1 Nueva</span>
+                    </div>
+                    <div class="px-4 py-3 text-xs text-slate-600 dark:text-slate-300">
+                        <p class="font-bold text-slate-900 dark:text-white">Bienvenido a VeltraUI</p>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">El sistema base está configurado y listo para desarrollo.</p>
+                    </div>
+                </div>
+            {/if}
+        </div>
+
+        <!-- Fullscreen Toggle -->
+        <button
+            type="button"
+            onclick={toggleFullscreen}
+            title="Pantalla Completa"
+            class="hidden sm:flex p-2 rounded-xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+        >
+            <Maximize class="w-4 h-4" />
+        </button>
+
+        <!-- Theme Toggle -->
+        <ThemeToggle />
+
+        <!-- User Profile Pill Dropdown -->
+        <div class="relative ml-1">
+            <button
+                type="button"
+                onclick={() => userDropdown = !userDropdown}
+                class="flex items-center gap-2 p-1 pl-1.5 pr-2 rounded-xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200/80 dark:border-slate-700/60 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+            >
+                <div class="w-6 h-6 rounded-lg bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-bold text-[11px] flex items-center justify-center shrink-0">
+                    {userInitial}
+                </div>
+                <div class="hidden md:flex flex-col text-left">
+                    <span class="text-xs font-bold text-slate-800 dark:text-slate-200 leading-tight max-w-[120px] truncate">
+                        {userName}
+                    </span>
+                    <span class="text-[9px] font-semibold text-slate-400 leading-none">
+                        Administrator
+                    </span>
+                </div>
+                <ChevronDown class="w-3 h-3 text-slate-400" />
+            </button>
+
+            {#if userDropdown}
+                <div class="absolute right-0 mt-2 w-56 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl py-2 z-50 animate-in fade-in zoom-in-95 duration-100">
+                    <div class="px-4 py-2 border-b border-slate-100 dark:border-slate-800">
+                        <p class="text-xs font-bold text-slate-900 dark:text-white truncate">{userName}</p>
+                        <p class="text-[10px] text-slate-500 dark:text-slate-400 truncate">{userEmail}</p>
+                    </div>
+                    <div class="py-1">
+                        <Link
+                            href="/settings/profile"
+                            class="flex items-center gap-2 px-4 py-2 text-xs text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                        >
+                            <Shield class="w-3.5 h-3.5 text-cyan-500" />
+                            <span>Perfil &amp; 2FA</span>
+                        </Link>
+                    </div>
+                    <div class="pt-1 border-t border-slate-100 dark:border-slate-800">
+                        <form method="POST" action="/logout">
+                            <button
+                                type="submit"
+                                class="w-full flex items-center gap-2 px-4 py-2 text-xs text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/20 transition-colors text-left font-medium cursor-pointer"
+                            >
+                                <LogOut class="w-3.5 h-3.5" />
+                                <span>Cerrar Sesión</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            {/if}
+        </div>
+    </div>
+</header>

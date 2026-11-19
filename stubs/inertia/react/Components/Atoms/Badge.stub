@@ -1,0 +1,19 @@
+import React from 'react';
+
+const VARIANTS = {
+    cyan: 'vlt-pill-cyan',
+    emerald: 'vlt-pill-emerald',
+    amber: 'vlt-pill-amber',
+    rose: 'vlt-pill-rose',
+    slate: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300 border-slate-200 dark:border-slate-700',
+};
+
+export default function Badge({ children, variant = 'cyan', dot = false, className = '' }) {
+    const variantClass = VARIANTS[variant] || VARIANTS.cyan;
+    return (
+        <span className={`vlt-pill ${variantClass} text-[11px] font-bold py-0.5 px-2.5 inline-flex items-center gap-1.5 ${className}`}>
+            {dot && <span className="pill-dot" />}
+            {children}
+        </span>
+    );
+}

@@ -1,0 +1,17 @@
+<script>
+    export let href = '/dashboard';
+    export let showText = true;
+</script>
+
+<a {href} class="brand-link flex items-center gap-3">
+    <img 
+        src="/vendor/veltra/img/logo.png" 
+        alt="VeltraUI" 
+        class="brand-logo h-7 w-auto shrink-0 object-contain" 
+    />
+    {#if showText}
+        <span class="brand-text font-black text-slate-900 dark:text-white tracking-tight">
+            Veltra<span class="text-cyan-500">UI</span>
+        </span>
+    {/if}
+</a>

@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ config('veltra.theme.default', 'dark') }}">
+    <head>
+        <meta charset="utf-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+
+        <title inertia>{{ config('app.name', 'Laravel') }}</title>
+
+        <!-- Zero-FOUC Unified Veltra & Laravel Theme Script -->
+        <script>
+            (function() {
+                try {
+                    const key = '{{ config('veltra.theme.storage_key', 'veltra-theme') }}';
+                    const defaultTheme = '{{ config('veltra.theme.default', 'dark') }}';
+                    const savedTheme = localStorage.getItem('appearance') || localStorage.getItem(key) || defaultTheme;
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    const isDark = savedTheme === 'dark' || (savedTheme === 'system' && prefersDark);
+                    const effectiveTheme = isDark ? 'dark' : 'light';
+
+                    document.documentElement.setAttribute('data-theme', savedTheme === 'system' ? effectiveTheme : savedTheme);
+                    if (isDark) {
+                        document.documentElement.classList.add('dark');
+                    } else {
+                        document.documentElement.classList.remove('dark');
+                    }
+                    document.documentElement.style.colorScheme = isDark ? 'dark' : 'light';
+                } catch (e) {}
+            })();
+        </script>
+
+        <!-- Tipografías -->
+        <link rel="preconnect" href="https://fonts.googleapis.com">
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+        <!-- Lucide Icons CDN -->
+        <script src="https://unpkg.com/lucide@latest"></script>
+
+        <!-- Estilos VeltraUI Design System -->
+        <link rel="stylesheet" href="{{ asset('vendor/veltra/css/veltra.css') }}">
+
+        <!-- Scripts -->
+        @routes
+        @viteReactRefresh
+        @vite(['resources/js/app.jsx', "resources/js/Pages/{$page['component']}.jsx"])
+        @inertiaHead
+    </head>
+    <body class="font-sans antialiased text-body bg-body min-h-screen">
+        @inertia
+        <script>
+            document.addEventListener('DOMContentLoaded', function () {
+                if (window.lucide) {
+                    window.lucide.createIcons();
+                }
+            });
+        </script>
+    </body>
+</html>

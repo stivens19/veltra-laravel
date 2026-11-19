@@ -1,0 +1,248 @@
+<script setup lang="ts">
+import { ref, onMounted } from 'vue';
+import { Head, Link, useForm } from '@inertiajs/vue3';
+import {
+    ShieldCheck,
+    Mail,
+    Lock,
+    Eye,
+    EyeOff,
+    ArrowRight,
+    AlertCircle,
+    Loader2,
+    KeyRound,
+} from '@lucide/vue';
+
+interface Props {
+    status?: string;
+    canResetPassword?: boolean;
+    canRegister?: boolean;
+    canUsePasskey?: boolean;
+}
+
+const props = withDefaults(defineProps<Props>(), {
+    status: '',
+    canResetPassword: true,
+    canRegister: true,
+    canUsePasskey: true,
+});
+
+const showPassword = ref(false);
+const isPasskeySupported = ref(false);
+const isPasskeyLoading = ref(false);
+const passkeyError = ref<string | null>(null);
+
+onMounted(() => {
+    isPasskeySupported.value = typeof window !== 'undefined' && Boolean(window.PublicKeyCredential);
+});
+
+const handlePasskeyLogin = async () => {
+    isPasskeyLoading.value = true;
+    passkeyError.value = null;
+
+    try {
+        const { Passkeys } = await import('@laravel/passkeys');
+        const response = await Passkeys.verify({
+            routes: {
+                options: '/passkeys/login/options',
+                submit: '/passkeys/login',
+            },
+        });
+        if (response?.redirect) {
+            window.location.href = response.redirect;
+        } else {
+            window.location.href = '/dashboard';
+        }
+    } catch (err: any) {
+        if (err?.name !== 'UserCancelledError' && err?.constructor?.name !== 'UserCancelledError') {
+            passkeyError.value = err?.message || 'Error en la verificación de Passkey';
+        }
+    } finally {
+        isPasskeyLoading.value = false;
+    }
+};
+
+const form = useForm({
+    email: '',
+    password: '',
+    remember: false,
+});
+
+const submit = () => {
+    form.post('/login', {
+        onFinish: () => {
+            form.reset('password');
+        },
+    });
+};
+</script>
+
+<template>
+    <Head title="Log in" />
+
+    <!-- Header / Brand Icon -->
+    <div class="text-center mb-6">
+        <div class="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mx-auto mb-3 shadow-xs">
+            <ShieldCheck class="w-6 h-6" />
+        </div>
+        <h1 class="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+            Log in
+        </h1>
+        <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+            Enter your credentials to access your account.
+        </p>
+    </div>
+
+    <!-- Status Alert -->
+    <div v-if="status" class="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+        {{ status }}
+    </div>
+
+    <!-- Passkey Login Option (Conditional) -->
+    <div v-if="canUsePasskey && isPasskeySupported" class="mb-5">
+        <button
+            type="button"
+            @click="handlePasskeyLogin"
+            :disabled="isPasskeyLoading"
+            class="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
+        >
+            <Loader2 v-if="isPasskeyLoading" class="w-4 h-4 animate-spin text-cyan-600 dark:text-cyan-400" />
+            <KeyRound v-else class="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+            <span>{{ isPasskeyLoading ? 'Authenticating...' : 'Sign in with a passkey' }}</span>
+        </button>
+
+        <p v-if="passkeyError" class="text-[11px] font-semibold text-rose-500 mt-2 text-center">
+            {{ passkeyError }}
+        </p>
+
+        <div class="relative my-5">
+            <div class="absolute inset-0 flex items-center">
+                <div class="w-full border-t border-slate-200 dark:border-slate-800" />
+            </div>
+            <div class="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
+                <span class="bg-white dark:bg-slate-900 px-3 text-slate-400 dark:text-slate-500">
+                    Or continue with email
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Login Form -->
+    <form @submit.prevent="submit" class="space-y-4">
+        <!-- Email Address -->
+        <div>
+            <label
+                for="email"
+                class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1"
+            >
+                Email address <span class="text-rose-500">*</span>
+            </label>
+            <div class="relative">
+                <Mail class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                <input
+                    id="email"
+                    type="email"
+                    name="email"
+                    v-model="form.email"
+                    required
+                    autofocus
+                    autocomplete="email"
+                    placeholder="email@example.com"
+                    :class="[
+                        'w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors',
+                        form.errors.email
+                            ? 'border-rose-500'
+                            : 'border-slate-200 dark:border-slate-700'
+                    ]"
+                />
+            </div>
+            <p v-if="form.errors.email" class="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                <AlertCircle class="w-3.5 h-3.5" />
+                {{ form.errors.email }}
+            </p>
+        </div>
+
+        <!-- Password -->
+        <div>
+            <div class="flex items-center justify-between mb-1">
+                <label
+                    for="password"
+                    class="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                >
+                    Password <span class="text-rose-500">*</span>
+                </label>
+                <Link
+                    v-if="canResetPassword"
+                    href="/forgot-password"
+                    class="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:underline"
+                >
+                    Forgot your password?
+                </Link>
+            </div>
+            <div class="relative">
+                <Lock class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                <input
+                    id="password"
+                    :type="showPassword ? 'text' : 'password'"
+                    name="password"
+                    v-model="form.password"
+                    required
+                    autocomplete="current-password"
+                    placeholder="••••••••"
+                    :class="[
+                        'w-full pl-10 pr-10 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors',
+                        form.errors.password
+                            ? 'border-rose-500'
+                            : 'border-slate-200 dark:border-slate-700'
+                    ]"
+                />
+                <button
+                    type="button"
+                    @click="showPassword = !showPassword"
+                    class="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                >
+                    <EyeOff v-if="showPassword" class="w-4 h-4" />
+                    <Eye v-else class="w-4 h-4" />
+                </button>
+            </div>
+            <p v-if="form.errors.password" class="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                <AlertCircle class="w-3.5 h-3.5" />
+                {{ form.errors.password }}
+            </p>
+        </div>
+
+        <!-- Remember Me -->
+        <div class="flex items-center justify-between pt-1">
+            <label class="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
+                <input
+                    type="checkbox"
+                    v-model="form.remember"
+                    class="w-4 h-4 accent-cyan-600 rounded cursor-pointer"
+                />
+                <span>Remember me</span>
+            </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+            type="submit"
+            :disabled="form.processing"
+            class="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-cyan-500/20 cursor-pointer transition-all mt-2 disabled:opacity-50"
+        >
+            <Loader2 v-if="form.processing" class="w-3.5 h-3.5 animate-spin" />
+            <ArrowRight v-else class="w-3.5 h-3.5" />
+            <span>Log in</span>
+        </button>
+    </form>
+
+    <!-- Footer Card (Conditional on canRegister) -->
+    <div v-if="canRegister" class="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+        Don't have an account?
+        <Link
+            href="/register"
+            class="font-bold text-cyan-600 dark:text-cyan-400 hover:underline ml-1"
+        >
+            Sign up
+        </Link>
+    </div>
+</template>

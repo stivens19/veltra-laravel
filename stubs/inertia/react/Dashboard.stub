@@ -1,0 +1,83 @@
+import React from 'react';
+import { Head, Link, usePage } from '@inertiajs/react';
+import { BookOpen, Layout } from 'lucide-react';
+
+export default function Dashboard() {
+    const { auth } = usePage().props as any;
+    const user = auth?.user || { name: 'Usuario' };
+
+    return (
+        <>
+            <Head title="Dashboard" />
+
+            {/* Breadcrumb & Title Header */}
+            <section className="vlt-content-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+                <div>
+                    <h1 className="vlt-page-title text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                        Dashboard
+                    </h1>
+                    <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                        Welcome back, {user.name}.
+                    </p>
+                </div>
+                <nav className="vlt-breadcrumb" aria-label="Breadcrumb">
+                    <ol className="flex items-center gap-2 text-xs">
+                        <li>
+                            <Link href="/dashboard" className="text-slate-500 hover:text-cyan-600 font-medium">
+                                Home
+                            </Link>
+                        </li>
+                        <li><span className="text-slate-300 dark:text-slate-600">/</span></li>
+                        <li className="active font-bold text-cyan-600 dark:text-cyan-400">
+                            Dashboard
+                        </li>
+                    </ol>
+                </nav>
+            </section>
+
+            {/* Workspace Card */}
+            <div className="w-full">
+                <div className="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xs overflow-hidden w-full">
+                    {/* Card Header */}
+                    <div className="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                        <div className="flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                                <Layout className="w-4 h-4" />
+                            </div>
+                            <div>
+                                <h2 className="text-sm font-bold text-slate-900 dark:text-white">Workspace</h2>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">Blank canvas ready for development</p>
+                            </div>
+                        </div>
+                        <span className="vlt-pill vlt-pill-cyan text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">
+                            Ready
+                        </span>
+                    </div>
+
+                    {/* Card Center Body */}
+                    <div className="py-16 px-6 text-center">
+                        <div className="w-16 h-16 mx-auto rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4 ring-1 ring-cyan-500/20 shadow-xs">
+                            <BookOpen className="w-8 h-8" />
+                        </div>
+                        <h3 className="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                            You're logged in!
+                        </h3>
+                        <p className="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed mb-6">
+                            Your base dashboard layout is configured and ready. Start adding your widgets, metrics, tables, and React components here.
+                        </p>
+                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs font-mono text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
+                            <span className="w-2 h-2 rounded-full bg-cyan-500"></span>
+                            <span>resources/js/pages/dashboard.tsx</span>
+                        </div>
+                    </div>
+
+                    {/* Card Footer */}
+                    <div className="flex items-center justify-between text-xs px-6 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                        <span className="text-slate-500 dark:text-slate-400">VeltraUI Starter</span>
+                        <span className="font-mono text-[11px] text-slate-400">v1.0.0</span>
+                    </div>
+                </div>
+            </div>
+        </>
+    );
+}

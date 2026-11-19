@@ -1,0 +1,67 @@
+<script setup>
+import { Head, Link, usePage } from '@inertiajs/vue3';
+import { BookOpen, Layout } from '@lucide/vue';
+
+const { auth } = usePage().props;
+const user = auth?.user || { name: 'User' };
+</script>
+
+<template>
+    <Head title="Dashboard" />
+
+    <!-- Breadcrumb & Title Header -->
+    <section class="vlt-content-header flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 mb-6">
+        <div>
+            <h1 class="vlt-page-title text-2xl font-black text-slate-900 dark:text-white tracking-tight">Dashboard</h1>
+            <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                Welcome back, {{ user.name }}.
+            </p>
+        </div>
+        <nav class="vlt-breadcrumb" aria-label="Breadcrumb">
+            <ol class="flex items-center gap-2 text-xs">
+                <li><Link href="/dashboard" class="text-slate-500 hover:text-cyan-600 font-medium">Home</Link></li>
+                <li><span class="text-slate-300 dark:text-slate-600">/</span></li>
+                <li class="active font-bold text-cyan-600 dark:text-cyan-400">Dashboard</li>
+            </ol>
+        </nav>
+    </section>
+
+    <!-- Workspace Card -->
+    <div class="w-full">
+        <div class="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xs overflow-hidden w-full">
+            <div class="flex items-center justify-between border-b border-slate-100 dark:border-slate-800 px-6 py-4">
+                <div class="flex items-center gap-2.5">
+                    <div class="w-8 h-8 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                        <Layout class="w-4 h-4" />
+                    </div>
+                    <div>
+                        <h2 class="text-sm font-bold text-slate-900 dark:text-white">Workspace</h2>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400">Blank canvas ready for development</p>
+                    </div>
+                </div>
+                <span class="vlt-pill vlt-pill-cyan text-xs font-semibold px-2.5 py-0.5 rounded-full bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20">Ready</span>
+            </div>
+
+            <div class="py-16 px-6 text-center">
+                <div class="w-16 h-16 mx-auto rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mb-4 ring-1 ring-cyan-500/20 shadow-xs">
+                    <BookOpen class="w-8 h-8" />
+                </div>
+                <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-2">
+                    You're logged in!
+                </h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 max-w-md mx-auto leading-relaxed mb-6">
+                    Your base dashboard layout is configured and ready. Start adding your Vue components, charts, and metrics here.
+                </p>
+                <div class="inline-flex items-center gap-2 px-3 py-1.5 rounded-xl bg-slate-50 dark:bg-slate-800/60 text-xs font-mono text-slate-600 dark:text-slate-300 border border-slate-200/80 dark:border-slate-700/60">
+                    <span class="w-2 h-2 rounded-full bg-cyan-500"></span>
+                    <span>resources/js/pages/Dashboard.vue</span>
+                </div>
+            </div>
+
+            <div class="flex items-center justify-between text-xs px-6 py-3 border-t border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-800/20">
+                <span class="text-slate-500 dark:text-slate-400">VeltraUI Starter</span>
+                <span class="font-mono text-[11px] text-slate-400">v1.0.0</span>
+            </div>
+        </div>
+    </div>
+</template>

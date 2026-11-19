@@ -1,0 +1,187 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\Validation\ValidationException;
+use Illuminate\View\View;
+use Veltra\VeltraLaravel\Services\TwoFactorService;
+
+class ProfileController extends Controller
+{
+    /**
+     * Display the user's profile and security settings.
+     */
+    public function edit(Request $request, TwoFactorService $twoFactorService): View
+    {
+        $user = $request->user();
+
+        $canManageTwoFactor = class_exists(\Laravel\Fortify\Features::class)
+            && \Laravel\Fortify\Features::canManageTwoFactorAuthentication();
+
+        $is2faEnabled = method_exists($user, 'hasEnabledTwoFactorAuthentication')
+            ? (bool) $user->hasEnabledTwoFactorAuthentication()
+            : (! is_null($user->two_factor_secret) && ! is_null($user->two_factor_confirmed_at));
+
+        $twoFactorPending = ! is_null($user->two_factor_secret) && is_null($user->two_factor_confirmed_at);
+
+        $qrCodeUrl = null;
+        $secretKey = null;
+        $recoveryCodes = [];
+
+        if ($twoFactorPending || $is2faEnabled) {
+            $secretKey = $user->two_factor_secret;
+            $qrCodeUrl = $twoFactorService->getQrCodeUrl(config('app.name', 'VeltraUI'), $user->email, $secretKey);
+
+            $recoveryCodes = is_array($user->two_factor_recovery_codes)
+                ? $user->two_factor_recovery_codes
+                : json_decode($user->two_factor_recovery_codes ?: '[]', true);
+        }
+
+        return view('profile', [
+            'user' => $user,
+            'is2faEnabled' => $is2faEnabled,
+            'twoFactorPending' => $twoFactorPending,
+            'canManageTwoFactor' => $canManageTwoFactor,
+            'qrCodeUrl' => $qrCodeUrl,
+            'secretKey' => $secretKey,
+            'recoveryCodes' => is_array($recoveryCodes) ? $recoveryCodes : [],
+        ]);
+    }
+
+    /**
+     * Update the user's profile information.
+     */
+    public function update(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $validated = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', 'unique:users,email,'.$user->id],
+        ]);
+
+        $user->fill($validated);
+
+        if ($user->isDirty('email')) {
+            $user->email_verified_at = null;
+        }
+
+        $user->save();
+
+        return redirect()->route('profile.edit')->with('status', 'profile-updated');
+    }
+
+    /**
+     * Update the user's password.
+     */
+    public function updatePassword(Request $request): RedirectResponse
+    {
+        $validated = $request->validate([
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
+        ]);
+
+        $request->user()->update([
+            'password' => Hash::make($validated['password']),
+        ]);
+
+        return redirect()->route('profile.edit')->with('status', 'password-updated');
+    }
+
+    /**
+     * Start Two-Factor Authentication setup (generates secret and recovery codes).
+     */
+    public function enableTwoFactor(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    {
+        $user = $request->user();
+
+        $secret = $twoFactorService->generateSecretKey();
+        $recoveryCodes = $twoFactorService->generateRecoveryCodes();
+
+        $user->forceFill([
+            'two_factor_secret' => $secret,
+            'two_factor_recovery_codes' => $recoveryCodes,
+            'two_factor_confirmed_at' => null,
+        ])->save();
+
+        return redirect()->route('profile.edit')->with('status', '2fa-setup-started');
+    }
+
+    /**
+     * Confirm Two-Factor Authentication using the 6-digit OTP code.
+     */
+    public function confirmTwoFactor(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    {
+        $request->validate([
+            'code' => ['required', 'string'],
+        ]);
+
+        $user = $request->user();
+
+        if (! $user->two_factor_secret) {
+            return redirect()->route('profile.edit')->withErrors(['two_factor_code' => 'No hay configuración de 2FA pendiente.']);
+        }
+
+        if (! $twoFactorService->verifyCode($user->two_factor_secret, $request->input('code'))) {
+            return redirect()->route('profile.edit')->withErrors(['two_factor_code' => 'El código de 6 dígitos no coincide o ha expirado. Por favor inténtalo de nuevo.']);
+        }
+
+        $user->forceFill([
+            'two_factor_confirmed_at' => now(),
+        ])->save();
+
+        return redirect()->route('profile.edit')->with('status', '2fa-enabled');
+    }
+
+    /**
+     * Disable Two-Factor Authentication.
+     */
+    public function disableTwoFactor(Request $request): RedirectResponse
+    {
+        $user = $request->user();
+
+        $user->forceFill([
+            'two_factor_secret' => null,
+            'two_factor_recovery_codes' => null,
+            'two_factor_confirmed_at' => null,
+        ])->save();
+
+        return redirect()->route('profile.edit')->with('status', '2fa-disabled');
+    }
+
+    /**
+     * Regenerate 2FA recovery codes.
+     */
+    public function regenerateRecoveryCodes(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    {
+        $user = $request->user();
+
+        $user->forceFill([
+            'two_factor_recovery_codes' => $twoFactorService->generateRecoveryCodes(),
+        ])->save();
+
+        return redirect()->route('profile.edit')->with('status', 'recovery-codes-generated');
+    }
+
+    /**
+     * Backward-compatible toggle for 2FA.
+     */
+    public function toggleTwoFactor(Request $request, TwoFactorService $twoFactorService): RedirectResponse
+    {
+        $user = $request->user();
+
+        $is2faEnabled = method_exists($user, 'hasEnabledTwoFactorAuthentication')
+            ? $user->hasEnabledTwoFactorAuthentication()
+            : (! is_null($user->two_factor_secret) && ! is_null($user->two_factor_confirmed_at));
+
+        if ($is2faEnabled || ! is_null($user->two_factor_secret)) {
+            return $this->disableTwoFactor($request);
+        }
+
+        return $this->enableTwoFactor($request, $twoFactorService);
+    }
+}

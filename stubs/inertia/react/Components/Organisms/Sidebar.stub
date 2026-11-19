@@ -1,0 +1,267 @@
+import React, { useState } from 'react';
+import { Link, usePage } from '@inertiajs/react';
+import BrandLogo from '../Atoms/BrandLogo';
+import UserPanel from '../Molecules/UserPanel';
+import SearchInput from '../Molecules/SearchInput';
+import {
+    Gauge,
+    LayoutGrid,
+    Copy,
+    PlayCircle,
+    BookOpen,
+    Layers,
+    FileText,
+    Table,
+    Calendar,
+    Trello,
+    User,
+    Users,
+    ShieldCheck,
+    ChevronRight,
+    Circle,
+    CircleDot,
+    Link2,
+    Palette,
+    Globe
+} from 'lucide-react';
+
+interface NavItemData {
+    header?: string;
+    title?: string;
+    icon?: string;
+    url?: string;
+    active?: boolean;
+    badge?: string;
+    badge_variant?: string;
+    children?: NavItemData[];
+    has_active_child?: boolean;
+}
+
+function renderIcon(iconName?: string, className = 'w-4 h-4 shrink-0') {
+    switch (iconName) {
+        case 'gauge':
+            return <Gauge className={className} />;
+        case 'layout-grid':
+            return <LayoutGrid className={className} />;
+        case 'copy':
+            return <Copy className={className} />;
+        case 'play-circle':
+            return <PlayCircle className={className} />;
+        case 'book-open':
+            return <BookOpen className={className} />;
+        case 'layers':
+            return <Layers className={className} />;
+        case 'file-text':
+            return <FileText className={className} />;
+        case 'table':
+            return <Table className={className} />;
+        case 'calendar':
+            return <Calendar className={className} />;
+        case 'trello':
+            return <Trello className={className} />;
+        case 'user':
+            return <User className={className} />;
+        case 'users':
+            return <Users className={className} />;
+        case 'shield-check':
+            return <ShieldCheck className={className} />;
+        case 'circle-dot':
+            return <CircleDot className="w-3.5 h-3.5 text-cyan-500 shrink-0" />;
+        case 'circle':
+            return <Circle className="w-3.5 h-3.5 text-slate-400 shrink-0" />;
+        case 'link-2':
+            return <Link2 className={className} />;
+        case 'palette':
+            return <Palette className={className} />;
+        case 'globe':
+            return <Globe className={className} />;
+        default:
+            return <Circle className={className} />;
+    }
+}
+
+const defaultNavigation: NavItemData[] = [
+    { header: 'MAIN NAVIGATION' },
+    {
+        title: 'Dashboard',
+        icon: 'gauge',
+        url: '/dashboard',
+    },
+    { header: 'SISTEMA & CUENTA' },
+    {
+        title: 'Perfil & 2FA',
+        icon: 'shield-check',
+        url: '/settings/profile',
+    },
+];
+
+function normalizePath(url?: string | null): string {
+    if (!url || url === '#') return '';
+    try {
+        const path = new URL(url, 'http://localhost').pathname;
+        return ('/' + path.replace(/^\/+|\/+$/g, '')) || '/';
+    } catch {
+        return ('/' + String(url).replace(/^\/+|\/+$/g, '')) || '/';
+    }
+}
+
+function isItemActive(item: NavItemData, currentUrl: string): boolean {
+    if (!item?.url || item.url === '#') return false;
+    const current = normalizePath(currentUrl);
+    const target = normalizePath(item.url);
+    if (!target) return false;
+
+    // Exact match
+    if (current === target) return true;
+
+    // Profile & Settings family
+    if (['/profile', '/settings/profile', '/settings/security', '/settings/appearance', '/settings'].includes(target)) {
+        return current.startsWith('/settings') || current.startsWith('/profile');
+    }
+
+    // Dashboard root match
+    if (target === '/dashboard' || target === '/') {
+        return current === '/dashboard' || current === '/';
+    }
+
+    // Subpath match
+    return current.startsWith(target + '/');
+}
+
+function NavGroup({ item, currentUrl }: { item: NavItemData; currentUrl: string }) {
+    const isChildActive = item.children?.some(c => isItemActive(c, currentUrl)) || isItemActive(item, currentUrl);
+    const [open, setOpen] = useState(isChildActive ?? false);
+
+    return (
+        <li className="vlt-nav-item">
+            <button
+                type="button"
+                onClick={() => setOpen(!open)}
+                className={`vlt-nav-link w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer ${
+                    isChildActive
+                        ? 'active bg-cyan-500 !text-white font-bold shadow-xs'
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold'
+                }`}
+            >
+                <div className="flex items-center gap-2.5 min-w-0">
+                    {renderIcon(item.icon, `w-4 h-4 shrink-0 ${isChildActive ? '!text-white' : 'text-slate-500 dark:text-slate-400'}`)}
+                    <span className={`vlt-nav-text truncate ${isChildActive ? '!text-white font-bold' : ''}`}>{item.title}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                    {item.badge && (
+                        <span className="vlt-nav-badge text-[10px] font-bold px-1.5 py-0.5 rounded-full bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300">
+                            {item.badge}
+                        </span>
+                    )}
+                    <ChevronRight className={`w-3.5 h-3.5 transition-transform duration-200 shrink-0 ${isChildActive ? '!text-white' : ''} ${open ? 'rotate-90' : ''}`} />
+                </div>
+            </button>
+
+            {open && item.children && (
+                <ul className="vlt-nav-treeview pl-4 pr-1 py-1.5 space-y-1 mt-1 border-l-2 border-slate-200/60 dark:border-slate-800 ml-4">
+                    {item.children.map((child, cIdx) => {
+                        const isChildCurrent = isItemActive(child, currentUrl);
+                        return (
+                            <li key={cIdx}>
+                                <Link
+                                    href={child.url || '#'}
+                                    className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                        isChildCurrent
+                                            ? 'active !text-white !bg-cyan-500 font-bold shadow-xs'
+                                            : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                                    }`}
+                                >
+                                    {renderIcon(child.icon, `w-3.5 h-3.5 shrink-0 ${isChildCurrent ? '!text-white' : 'text-slate-400'}`)}
+                                    <span className={`truncate ${isChildCurrent ? '!text-white font-bold' : ''}`}>{child.title}</span>
+                                </Link>
+                            </li>
+                        );
+                    })}
+                </ul>
+            )}
+        </li>
+    );
+}
+
+export default function Sidebar({ user, className = '' }: { user: any; className?: string }) {
+    const { url, props } = usePage() as any;
+    const veltraNav = props.veltra?.navigation;
+    const navItems: NavItemData[] = (Array.isArray(veltraNav) && veltraNav.length > 0)
+        ? veltraNav
+        : defaultNavigation;
+
+    return (
+        <aside className={`vlt-sidebar border-r border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col ${className}`}>
+            {/* Brand Logo Header */}
+            <div className="vlt-sidebar-brand p-4 border-b border-slate-200/60 dark:border-slate-800/60">
+                <BrandLogo href="/dashboard" />
+            </div>
+
+            {/* User Panel Molecule */}
+            <div className="p-3">
+                <UserPanel user={user} role="Administrator" />
+            </div>
+
+            {/* Sidebar Search Molecule */}
+            <div className="vlt-sidebar-search px-3 py-1">
+                <SearchInput placeholder="Buscar en menú..." />
+            </div>
+
+            {/* Navigation List */}
+            <ul className="vlt-nav px-3 py-2 space-y-1 flex-1 overflow-y-auto">
+                {navItems.map((item, idx) => {
+                    if (item.header) {
+                        return (
+                            <li
+                                key={idx}
+                                className="vlt-nav-header text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-2 mt-3 first:mt-0"
+                            >
+                                {item.header}
+                            </li>
+                        );
+                    }
+
+                    if (item.children && item.children.length > 0) {
+                        return <NavGroup key={idx} item={item} currentUrl={url} />;
+                    }
+
+                    const isActive = isItemActive(item, url);
+
+                    return (
+                        <li key={idx} className="vlt-nav-item">
+                            <Link
+                                href={item.url || '#'}
+                                className={`vlt-nav-link flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors ${
+                                    isActive
+                                        ? 'active bg-cyan-500 !text-white font-bold shadow-xs'
+                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold'
+                                }`}
+                            >
+                                <div className="flex items-center gap-2.5 min-w-0">
+                                    {renderIcon(item.icon, `w-4 h-4 shrink-0 ${isActive ? '!text-white' : 'text-slate-500 dark:text-slate-400'}`)}
+                                    <span className={`vlt-nav-text truncate ${isActive ? '!text-white font-bold' : ''}`}>{item.title}</span>
+                                </div>
+                                {item.badge && (
+                                    <span className={`vlt-nav-badge text-[10px] font-bold px-2 py-0.5 rounded-full ${item.badge_variant ? `vlt-pill-${item.badge_variant}` : (isActive ? 'bg-white/20 !text-white' : 'bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300')}`}>
+                                        {item.badge}
+                                    </span>
+                                )}
+                            </Link>
+                        </li>
+                    );
+                })}
+            </ul>
+
+            {/* Bottom Status Footer */}
+            <div className="vlt-sidebar-status p-3 border-t border-slate-200/80 dark:border-slate-800 mt-auto">
+                <div className="flex items-center justify-between text-xs text-slate-500">
+                    <span className="flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                        <span className="font-medium text-slate-600 dark:text-slate-400">Online</span>
+                    </span>
+                    <span className="font-mono text-[11px] text-slate-400">v1.0.0</span>
+                </div>
+            </div>
+        </aside>
+    );
+}

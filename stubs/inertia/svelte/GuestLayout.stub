@@ -1,0 +1,30 @@
+<script>
+    import ThemeToggle from '@/components/Atoms/ThemeToggle.svelte';
+</script>
+
+<div class="vlt-grid-bg text-slate-800 antialiased selection:bg-cyan-500 selection:text-white bg-slate-50 min-h-screen flex flex-col justify-between dark:bg-slate-950 dark:text-slate-100 relative">
+    <!-- Top-Right Theme Toggle -->
+    <div class="absolute top-5 right-5 z-20">
+        <ThemeToggle />
+    </div>
+
+    <!-- Ambient Light -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-gradient-to-b from-cyan-400/15 to-transparent blur-3xl pointer-events-none -z-10"></div>
+
+    <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto">
+        <a href="/" class="flex items-center gap-2.5 mb-6 group transition-transform hover:scale-105">
+            <img src="/vendor/veltra/img/logo.png" alt="VeltraUI" class="w-10 h-10 rounded-2xl object-contain shadow-xs" />
+            <span class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                Veltra<span class="text-cyan-500">UI</span>
+            </span>
+        </a>
+
+        <div class="w-full sm:max-w-md bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800/80 rounded-3xl p-6 sm:p-8 shadow-2xl relative overflow-hidden">
+            <slot />
+        </div>
+    </main>
+
+    <footer class="w-full text-center py-4 text-xs text-slate-400">
+        &copy; {new Date().getFullYear()} VeltraUI Suite. Todos los derechos reservados.
+    </footer>
+</div>

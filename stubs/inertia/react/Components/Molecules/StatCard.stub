@@ -1,0 +1,52 @@
+import React from 'react';
+import { Link } from '@inertiajs/react';
+import Badge from '../Atoms/Badge';
+
+export default function StatCard({ 
+    icon, 
+    title, 
+    badge, 
+    badgeVariant = 'emerald',
+    badgeDot = true,
+    children, 
+    linkText, 
+    linkHref = '#',
+    linkColor = 'text-cyan-600 dark:text-cyan-400',
+    className = '' 
+}) {
+    return (
+        <div className={`vlt-card p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs ${className}`}>
+            <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center gap-2.5">
+                    {icon && (
+                        <div className="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                            {icon}
+                        </div>
+                    )}
+                    <h3 className="text-xs font-bold text-slate-900 dark:text-white">{title}</h3>
+                </div>
+                {badge && (
+                    <Badge variant={badgeVariant} dot={badgeDot}>
+                        {badge}
+                    </Badge>
+                )}
+            </div>
+
+            <div className="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+                {children}
+            </div>
+
+            {linkText && (
+                <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
+                    <Link 
+                        href={linkHref} 
+                        className={`text-xs font-bold ${linkColor} hover:underline flex items-center justify-between`}
+                    >
+                        <span>{linkText}</span>
+                        <span>&rarr;</span>
+                    </Link>
+                </div>
+            )}
+        </div>
+    );
+}

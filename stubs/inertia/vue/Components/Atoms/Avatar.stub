@@ -1,0 +1,38 @@
+<script setup>
+import { computed } from 'vue';
+
+const props = defineProps({
+    name: {
+        type: String,
+        default: 'US',
+    },
+    size: {
+        type: String,
+        default: 'md',
+    },
+    online: {
+        type: Boolean,
+        default: true,
+    },
+});
+
+const sizeClasses = {
+    sm: 'w-7 h-7 text-xs rounded-lg',
+    md: 'w-9 h-9 text-xs rounded-xl',
+    lg: 'w-12 h-12 text-sm rounded-2xl',
+};
+
+const initials = computed(() => {
+    if (!props.name) return 'US';
+    return props.name.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
+});
+</script>
+
+<template>
+    <div class="relative shrink-0">
+        <div :class="[sizeClasses[size] || sizeClasses.md, 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 font-black flex items-center justify-center ring-2 ring-cyan-500/30']">
+            {{ initials }}
+        </div>
+        <span v-if="online" class="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 bg-emerald-500 border-2 border-white dark:border-slate-900 rounded-full" />
+    </div>
+</template>

@@ -1,0 +1,44 @@
+<script setup>
+import { Link } from '@inertiajs/vue3';
+
+defineProps({
+    href: {
+        type: String,
+        default: '#',
+    },
+    active: {
+        type: Boolean,
+        default: false,
+    },
+    badge: {
+        type: String,
+        default: null,
+    },
+});
+</script>
+
+<template>
+    <li class="vlt-nav-item">
+        <Link 
+            :href="href" 
+            :class="[
+                'vlt-nav-link flex items-center justify-between px-3 py-2 rounded-xl text-xs font-medium transition-colors',
+                active 
+                    ? 'active bg-cyan-500 !text-white font-bold shadow-xs' 
+                    : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-slate-100'
+            ]"
+        >
+            <div class="flex items-center gap-2.5 min-w-0">
+                <span class="vlt-nav-icon shrink-0" :class="active ? '!text-white' : ''">
+                    <slot name="icon" />
+                </span>
+                <span class="vlt-nav-text truncate" :class="active ? '!text-white font-bold' : ''">
+                    <slot />
+                </span>
+            </div>
+            <span v-if="badge" :class="['text-[10px] font-bold px-1.5 py-0.5 rounded-full', active ? 'bg-white/20 !text-white' : 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400']">
+                {{ badge }}
+            </span>
+        </Link>
+    </li>
+</template>

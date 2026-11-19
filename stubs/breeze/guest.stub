@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ config('veltra.theme.default', 'light') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ config('app.name', 'Laravel') }}</title>
+
+    <!-- Tipografías -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Anti-FOUC para Modo Oscuro -->
+    <script>
+        (function() {
+            try {
+                const key = '{{ config('veltra.theme.storage_key', 'veltra-theme') }}';
+                const defaultTheme = '{{ config('veltra.theme.default', 'light') }}';
+                const savedTheme = localStorage.getItem(key) || defaultTheme;
+                if (savedTheme === 'system') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                    if (prefersDark) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Estilos VeltraUI + Vite -->
+    <link rel="stylesheet" href="{{ asset('vendor/veltra/css/veltra.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    @if(isset(\Illuminate\Support\Facades\Blade::getCustomDirectives()['fluxAppearance']))
+        @fluxAppearance
+    @endif
+</head>
+<body class="vlt-grid-bg text-slate-800 antialiased selection:bg-cyan-500 selection:text-white bg-slate-50 min-h-screen flex flex-col justify-between dark:bg-slate-950 dark:text-slate-100 relative">
+
+    <!-- Luz ambiental decorativa -->
+    <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[800px] h-[300px] bg-gradient-to-b from-cyan-400/15 to-transparent blur-3xl pointer-events-none -z-10"></div>
+
+    <!-- Switch de modo oscuro discreto (sin barra de navegación) -->
+    @if(config('veltra.theme.allow_toggle', true))
+        <div class="fixed top-5 right-5 z-20">
+            <x-veltra::dark-mode-toggle />
+        </div>
+    @endif
+
+    <!-- Contenedor Central Limpio (Sin Navbar) -->
+    <main class="flex-1 flex flex-col items-center justify-center p-4 sm:p-6 my-auto w-full max-w-md mx-auto">
+        <!-- Logo e Identidad Centrado sobre la Tarjeta -->
+        <a href="/" class="flex items-center gap-2.5 mb-6 group transition-transform hover:scale-105">
+            <img src="{{ config('veltra.brand.logo', asset('vendor/veltra/img/logo.png')) }}" alt="{{ config('veltra.brand.name', 'VeltraUI') }}" class="w-10 h-10 rounded-2xl object-contain shadow-xs" />
+            <span class="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                {{ config('veltra.brand.short_name', 'Veltra') }}<span class="text-cyan-500">{{ config('veltra.brand.suffix', 'UI') }}</span>
+            </span>
+        </a>
+
+        {{ $slot }}
+    </main>
+
+    <!-- Footer Mini -->
+    <footer class="p-6 text-center text-xs text-slate-400 dark:text-slate-600">
+        {{ config('veltra.layout.footer_text', '© ' . date('Y') . ' VeltraUI Suite. Todos los derechos reservados.') }}
+    </footer>
+
+    <!-- Scripts -->
+    <script src="{{ asset('vendor/veltra/js/veltra.umd.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof VeltraUI !== 'undefined') VeltraUI.init();
+        });
+        document.addEventListener('livewire:navigated', function() {
+            if (typeof lucide !== 'undefined') lucide.createIcons();
+            if (typeof VeltraUI !== 'undefined') VeltraUI.init();
+        });
+    </script>
+    @if(isset(\Illuminate\Support\Facades\Blade::getCustomDirectives()['fluxScripts']))
+        @persist('toast')
+            <flux:toast.group>
+                <flux:toast />
+            </flux:toast.group>
+        @endpersist
+        @fluxScripts
+    @endif
+</body>
+</html>

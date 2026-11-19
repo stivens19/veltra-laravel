@@ -1,0 +1,32 @@
+<script setup>
+import Input from '../Atoms/Input.vue';
+
+defineProps({
+    label: String,
+    error: String,
+    required: {
+        type: Boolean,
+        default: false,
+    },
+    id: String,
+    modelValue: [String, Number],
+});
+
+defineEmits(['update:modelValue']);
+</script>
+
+<template>
+    <div class="space-y-1.5">
+        <label v-if="label" :for="id" class="block text-xs font-bold text-slate-700 dark:text-slate-300">
+            {{ label }} <span v-if="required" class="text-rose-500">*</span>
+        </label>
+        <Input 
+            :id="id" 
+            :model-value="modelValue" 
+            @update:model-value="$emit('update:modelValue', $event)" 
+            :has-error="!!error" 
+            v-bind="$attrs" 
+        />
+        <p v-if="error" class="text-[11px] font-semibold text-rose-500 mt-1">{{ error }}</p>
+    </div>
+</template>

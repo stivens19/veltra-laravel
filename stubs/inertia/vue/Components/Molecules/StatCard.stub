@@ -1,0 +1,56 @@
+<script setup>
+import { Link } from '@inertiajs/vue3';
+import Badge from '../Atoms/Badge.vue';
+
+defineProps({
+    title: String,
+    badge: String,
+    badgeVariant: {
+        type: String,
+        default: 'emerald',
+    },
+    badgeDot: {
+        type: Boolean,
+        default: true,
+    },
+    linkText: String,
+    linkHref: {
+        type: String,
+        default: '#',
+    },
+    linkColor: {
+        type: String,
+        default: 'text-cyan-600 dark:text-cyan-400',
+    },
+});
+</script>
+
+<template>
+    <div class="vlt-card p-5 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border border-slate-200/80 dark:border-slate-800 rounded-2xl shadow-xs">
+        <div class="flex items-center justify-between mb-3">
+            <div class="flex items-center gap-2.5">
+                <div class="w-8 h-8 rounded-xl bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                    <slot name="icon" />
+                </div>
+                <h3 class="text-xs font-bold text-slate-900 dark:text-white">{{ title }}</h3>
+            </div>
+            <Badge v-if="badge" :variant="badgeVariant" :dot="badgeDot">
+                {{ badge }}
+            </Badge>
+        </div>
+
+        <div class="text-xs text-slate-500 dark:text-slate-400 leading-relaxed mb-3">
+            <slot />
+        </div>
+
+        <div v-if="linkText" class="pt-3 border-t border-slate-100 dark:border-slate-800">
+            <Link 
+                :href="linkHref" 
+                :class="['text-xs font-bold hover:underline flex items-center justify-between', linkColor]"
+            >
+                <span>{{ linkText }}</span>
+                <span>&rarr;</span>
+            </Link>
+        </div>
+    </div>
+</template>

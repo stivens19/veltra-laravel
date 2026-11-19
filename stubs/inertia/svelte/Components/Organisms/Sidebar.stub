@@ -1,0 +1,199 @@
+<script lang="ts">
+    import { page, Link } from '@inertiajs/svelte';
+    import BrandLogo from '../Atoms/BrandLogo.svelte';
+    import UserPanel from '../Molecules/UserPanel.svelte';
+    import SearchInput from '../Molecules/SearchInput.svelte';
+    import {
+        Gauge,
+        LayoutGrid,
+        Copy,
+        PlayCircle,
+        BookOpen,
+        Layers,
+        FileText,
+        Table,
+        Calendar,
+        Kanban,
+        User,
+        Users,
+        ShieldCheck,
+        ChevronRight,
+        Circle,
+        CircleDot,
+        Link2,
+        Palette,
+        Globe
+    } from '@lucide/svelte';
+
+    const iconMap: Record<string, any> = {
+        gauge: Gauge,
+        'layout-grid': LayoutGrid,
+        copy: Copy,
+        'play-circle': PlayCircle,
+        'book-open': BookOpen,
+        layers: Layers,
+        'file-text': FileText,
+        table: Table,
+        calendar: Calendar,
+        trello: Kanban,
+        user: User,
+        users: Users,
+        'shield-check': ShieldCheck,
+        'circle-dot': CircleDot,
+        circle: Circle,
+        'link-2': Link2,
+        palette: Palette,
+        globe: Globe,
+    };
+
+    let {
+        user = { name: 'Usuario', email: 'user@example.com' }
+    }: {
+        user?: { name: string; email: string };
+    } = $props();
+
+    function normalizePath(url: string | null | undefined): string {
+        if (!url || url === '#') return '';
+        try {
+            const path = new URL(url, 'http://localhost').pathname;
+            return ('/' + path.replace(/^\/+|\/+$/g, '')) || '/';
+        } catch {
+            return ('/' + String(url).replace(/^\/+|\/+$/g, '')) || '/';
+        }
+    }
+
+    let currentUrl = $derived(normalizePath(page.url));
+    let veltraNav = $derived((page.props as any)?.veltra?.navigation);
+
+    const defaultNav = [
+        { header: 'MAIN NAVIGATION' },
+        {
+            title: 'Dashboard',
+            icon: 'gauge',
+            url: '/dashboard',
+        },
+        { header: 'SISTEMA & CUENTA' },
+        {
+            title: 'Perfil & 2FA',
+            icon: 'shield-check',
+            url: '/settings/profile',
+        },
+    ];
+
+    let navItems = $derived((Array.isArray(veltraNav) && veltraNav.length > 0) ? veltraNav : defaultNav);
+
+    function isItemActive(item: any, current: string): boolean {
+        if (!item?.url || item.url === '#') return false;
+        const target = normalizePath(item.url);
+        if (!target) return false;
+
+        // Exact match
+        if (current === target) return true;
+
+        // Profile & Settings family
+        if (['/profile', '/settings/profile', '/settings/security', '/settings/appearance', '/settings'].includes(target)) {
+            return current.startsWith('/settings') || current.startsWith('/profile');
+        }
+
+        // Dashboard root match
+        if (target === '/dashboard' || target === '/') {
+            return current === '/dashboard' || current === '/';
+        }
+
+        // Subpath match
+        return current.startsWith(target + '/');
+    }
+
+    function hasActiveChild(item: any, current: string): boolean {
+        if (!item?.children || !Array.isArray(item.children)) return false;
+        return item.children.some((child: any) => isItemActive(child, current));
+    }
+</script>
+
+<aside class="vlt-sidebar w-64 border-r border-slate-200/80 dark:border-slate-800 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md flex flex-col shrink-0">
+    <!-- Sidebar Brand Header -->
+    <div class="vlt-sidebar-brand p-4 border-b border-slate-200/60 dark:border-slate-800/60">
+        <BrandLogo href="/dashboard" />
+    </div>
+
+    <!-- User Panel Molecule -->
+    <div class="p-3">
+        <UserPanel {user} role="Administrator" />
+    </div>
+
+    <!-- Sidebar Search Molecule -->
+    <div class="vlt-sidebar-search px-3 py-1">
+        <SearchInput placeholder="Search menu..." />
+    </div>
+
+    <!-- Navigation List -->
+    <ul class="vlt-nav px-3 py-2 space-y-1 flex-1 overflow-y-auto">
+        {#each navItems as item, idx}
+            {#if item.header}
+                <li class="vlt-nav-header text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider px-3 py-2 mt-3 first:mt-0">
+                    {item.header}
+                </li>
+            {:else if item.children && item.children.length > 0}
+                {@const GroupIcon = iconMap[item.icon] || Circle}
+                {@const isGroupActive = hasActiveChild(item, currentUrl) || isItemActive(item, currentUrl)}
+                <li class="vlt-nav-item">
+                    <button
+                        type="button"
+                        class="vlt-nav-link w-full flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors cursor-pointer {isGroupActive ? 'active bg-cyan-500 !text-white font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold'}"
+                    >
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <GroupIcon class="w-4 h-4 shrink-0 {isGroupActive ? '!text-white' : 'text-slate-500 dark:text-slate-400'}" />
+                            <span class="vlt-nav-text truncate {isGroupActive ? '!text-white font-bold' : ''}">{item.title}</span>
+                        </div>
+                        <ChevronRight class="w-3.5 h-3.5 {isGroupActive ? '!text-white' : ''}" />
+                    </button>
+                    <ul class="vlt-nav-treeview pl-4 pr-1 py-1.5 space-y-1 mt-1 border-l-2 border-slate-200/60 dark:border-slate-800 ml-4">
+                        {#each item.children as child}
+                            {@const ChildIcon = iconMap[child.icon] || Circle}
+                            {@const isChildActive = isItemActive(child, currentUrl)}
+                            <li>
+                                <Link
+                                    href={child.url || '#'}
+                                    class="flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-medium transition-colors {isChildActive ? 'active !text-white !bg-cyan-500 font-bold shadow-xs' : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}"
+                                >
+                                    <ChildIcon class="w-3.5 h-3.5 shrink-0 {isChildActive ? '!text-white' : 'text-slate-400'}" />
+                                    <span class="{isChildActive ? '!text-white font-bold' : ''}">{child.title}</span>
+                                </Link>
+                            </li>
+                        {/each}
+                    </ul>
+                </li>
+            {:else}
+                {@const ItemIcon = iconMap[item.icon] || Circle}
+                {@const isCurrent = isItemActive(item, currentUrl)}
+                <li class="vlt-nav-item">
+                    <Link
+                        href={item.url || '#'}
+                        class="vlt-nav-link flex items-center justify-between px-3 py-2 rounded-xl text-xs transition-colors {isCurrent ? 'active bg-cyan-500 !text-white font-bold shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-900 dark:hover:text-white font-semibold'}"
+                    >
+                        <div class="flex items-center gap-2.5 min-w-0">
+                            <ItemIcon class="w-4 h-4 shrink-0 {isCurrent ? '!text-white' : 'text-slate-500 dark:text-slate-400'}" />
+                            <span class="vlt-nav-text truncate {isCurrent ? '!text-white font-bold' : ''}">{item.title}</span>
+                        </div>
+                        {#if item.badge}
+                            <span class="vlt-nav-badge px-2 py-0.5 rounded-full text-[10px] font-bold {item.badge_variant ? `vlt-pill-${item.badge_variant}` : (isCurrent ? 'bg-white/20 !text-white' : 'bg-cyan-100 dark:bg-cyan-950 text-cyan-700 dark:text-cyan-300')}">
+                                {item.badge}
+                            </span>
+                        {/if}
+                    </Link>
+                </li>
+            {/if}
+        {/each}
+    </ul>
+
+    <!-- Status Footer -->
+    <div class="p-3 border-t border-slate-200/80 dark:border-slate-800 mt-auto">
+        <div class="flex items-center justify-between text-xs text-slate-500">
+            <span class="flex items-center gap-1.5">
+                <span class="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
+                <span class="font-medium text-slate-600 dark:text-slate-400">Online</span>
+            </span>
+            <span class="font-mono text-[11px] text-slate-400">v1.0.0</span>
+        </div>
+    </div>
+</aside>

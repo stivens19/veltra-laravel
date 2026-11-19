@@ -1,0 +1,273 @@
+import { useState, useEffect, type FormEventHandler } from 'react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import {
+    ShieldCheck,
+    Mail,
+    Lock,
+    Eye,
+    EyeOff,
+    ArrowRight,
+    AlertCircle,
+    Loader2,
+    KeyRound,
+} from 'lucide-react';
+
+type Props = {
+    status?: string;
+    canResetPassword?: boolean;
+    canRegister?: boolean;
+    canUsePasskey?: boolean;
+};
+
+export default function Login({
+    status,
+    canResetPassword = true,
+    canRegister = true,
+    canUsePasskey = true,
+}: Props) {
+    const [showPassword, setShowPassword] = useState(false);
+    const [isPasskeyLoading, setIsPasskeyLoading] = useState(false);
+    const [passkeyError, setPasskeyError] = useState<string | null>(null);
+    const [isPasskeySupported, setIsPasskeySupported] = useState(false);
+
+    useEffect(() => {
+        setIsPasskeySupported(typeof window !== 'undefined' && Boolean(window.PublicKeyCredential));
+    }, []);
+
+    const handlePasskeyLogin = async () => {
+        setIsPasskeyLoading(true);
+        setPasskeyError(null);
+
+        try {
+            const { Passkeys } = await import('@laravel/passkeys');
+            const response = await Passkeys.verify({
+                routes: {
+                    options: '/passkeys/login/options',
+                    submit: '/passkeys/login',
+                },
+            });
+            if (response?.redirect) {
+                window.location.href = response.redirect;
+            } else {
+                window.location.href = '/dashboard';
+            }
+        } catch (err: any) {
+            if (err?.name !== 'UserCancelledError' && err?.constructor?.name !== 'UserCancelledError') {
+                setPasskeyError(err?.message || 'Error en la verificación de Passkey');
+            }
+        } finally {
+            setIsPasskeyLoading(false);
+        }
+    };
+
+    const { data, setData, post, processing, errors, reset } = useForm({
+        email: '',
+        password: '',
+        remember: false,
+    });
+
+    const submit: FormEventHandler = (e) => {
+        e.preventDefault();
+        post('/login', {
+            onFinish: () => reset('password'),
+        });
+    };
+
+    return (
+        <>
+            <Head title="Log in" />
+
+            {/* Header / Brand Icon */}
+            <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-2xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center mx-auto mb-3 shadow-xs">
+                    <ShieldCheck className="w-6 h-6" />
+                </div>
+                <h1 className="text-xl sm:text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+                    Log in
+                </h1>
+                <p className="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    Enter your credentials to access your account.
+                </p>
+            </div>
+
+            {/* Status Alert */}
+            {status && (
+                <div className="mb-4 p-3 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 border border-emerald-200 dark:border-emerald-800 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                    {status}
+                </div>
+            )}
+
+            {/* Passkey Login Option (Conditional) */}
+            {canUsePasskey && isPasskeySupported && (
+                <div className="mb-5">
+                    <button
+                        type="button"
+                        onClick={handlePasskeyLogin}
+                        disabled={isPasskeyLoading}
+                        className="w-full py-2.5 px-4 rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 text-xs font-bold flex items-center justify-center gap-2 shadow-xs cursor-pointer transition-colors disabled:opacity-50"
+                    >
+                        {isPasskeyLoading ? (
+                            <Loader2 className="w-4 h-4 animate-spin text-cyan-600 dark:text-cyan-400" />
+                        ) : (
+                            <KeyRound className="w-4 h-4 text-cyan-600 dark:text-cyan-400" />
+                        )}
+                        <span>
+                            {isPasskeyLoading ? 'Authenticating...' : 'Sign in with a passkey'}
+                        </span>
+                    </button>
+
+                    {passkeyError && (
+                        <p className="text-[11px] font-semibold text-rose-500 mt-2 text-center">
+                            {passkeyError}
+                        </p>
+                    )}
+
+                    <div className="relative my-5">
+                        <div className="absolute inset-0 flex items-center">
+                            <div className="w-full border-t border-slate-200 dark:border-slate-800" />
+                        </div>
+                        <div className="relative flex justify-center text-[10px] uppercase font-bold tracking-wider">
+                            <span className="bg-white dark:bg-slate-900 px-3 text-slate-400 dark:text-slate-500">
+                                Or continue with email
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Login Form */}
+            <form onSubmit={submit} className="space-y-4">
+                {/* Email Address */}
+                <div>
+                    <label
+                        htmlFor="email"
+                        className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1"
+                    >
+                        Email address <span className="text-rose-500">*</span>
+                    </label>
+                    <div className="relative">
+                        <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            id="email"
+                            type="email"
+                            name="email"
+                            value={data.email}
+                            onChange={(e) => setData('email', e.target.value)}
+                            required
+                            autoFocus
+                            autoComplete="email"
+                            placeholder="email@example.com"
+                            className={`w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border ${
+                                errors.email
+                                    ? 'border-rose-500'
+                                    : 'border-slate-200 dark:border-slate-700'
+                            } focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors`}
+                        />
+                    </div>
+                    {errors.email && (
+                        <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            {errors.email}
+                        </p>
+                    )}
+                </div>
+
+                {/* Password */}
+                <div>
+                    <div className="flex items-center justify-between mb-1">
+                        <label
+                            htmlFor="password"
+                            className="block text-xs font-bold text-slate-700 dark:text-slate-300"
+                        >
+                            Password <span className="text-rose-500">*</span>
+                        </label>
+                        {canResetPassword && (
+                            <Link
+                                href="/forgot-password"
+                                className="text-[11px] font-bold text-cyan-600 dark:text-cyan-400 hover:underline"
+                            >
+                                Forgot your password?
+                            </Link>
+                        )}
+                    </div>
+                    <div className="relative">
+                        <Lock className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                        <input
+                            id="password"
+                            type={showPassword ? 'text' : 'password'}
+                            name="password"
+                            value={data.password}
+                            onChange={(e) => setData('password', e.target.value)}
+                            required
+                            autoComplete="current-password"
+                            placeholder="••••••••"
+                            className={`w-full pl-10 pr-10 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border ${
+                                errors.password
+                                    ? 'border-rose-500'
+                                    : 'border-slate-200 dark:border-slate-700'
+                            } focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors`}
+                        />
+                        <button
+                            type="button"
+                            onClick={() => setShowPassword(!showPassword)}
+                            className="absolute right-3 top-2.5 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer"
+                        >
+                            {showPassword ? (
+                                <EyeOff className="w-4 h-4" />
+                            ) : (
+                                <Eye className="w-4 h-4" />
+                            )}
+                        </button>
+                    </div>
+                    {errors.password && (
+                        <p className="text-[11px] font-semibold text-rose-500 mt-1 flex items-center gap-1">
+                            <AlertCircle className="w-3.5 h-3.5" />
+                            {errors.password}
+                        </p>
+                    )}
+                </div>
+
+                {/* Remember Me */}
+                <div className="flex items-center justify-between pt-1">
+                    <label className="flex items-center gap-2 cursor-pointer text-xs text-slate-600 dark:text-slate-400 select-none">
+                        <input
+                            type="checkbox"
+                            name="remember"
+                            checked={data.remember}
+                            onChange={(e) => setData('remember', e.target.checked)}
+                            className="w-4 h-4 accent-cyan-600 rounded cursor-pointer"
+                        />
+                        <span>Remember me</span>
+                    </label>
+                </div>
+
+                {/* Submit Button */}
+                <button
+                    type="submit"
+                    disabled={processing}
+                    className="w-full py-2.5 px-4 rounded-xl bg-gradient-to-r from-cyan-500 to-sky-600 hover:from-cyan-600 hover:to-sky-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-md shadow-cyan-500/20 cursor-pointer transition-all mt-2 disabled:opacity-50"
+                >
+                    {processing ? (
+                        <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                    ) : (
+                        <ArrowRight className="w-3.5 h-3.5" />
+                    )}
+                    <span>Log in</span>
+                </button>
+            </form>
+
+            {/* Footer Card */}
+            {canRegister && (
+                <div className="mt-6 pt-5 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-500 dark:text-slate-400">
+                    Don't have an account?
+                    <Link
+                        href="/register"
+                        className="font-bold text-cyan-600 dark:text-cyan-400 hover:underline ml-1"
+                    >
+                        Sign up
+                    </Link>
+                </div>
+            )}
+        </>
+    );
+}

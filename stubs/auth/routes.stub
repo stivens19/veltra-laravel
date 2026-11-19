@@ -1,0 +1,60 @@
+<?php
+
+use App\Http\Controllers\Auth\AuthenticatedSessionController;
+use App\Http\Controllers\Auth\PasswordResetLinkController;
+use App\Http\Controllers\Auth\RegisteredUserController;
+use App\Http\Controllers\Auth\TwoFactorChallengeController;
+use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\Route;
+
+Route::middleware('guest')->group(function () {
+    Route::get('register', [RegisteredUserController::class, 'create'])
+        ->name('register');
+
+    Route::post('register', [RegisteredUserController::class, 'store']);
+
+    Route::get('login', [AuthenticatedSessionController::class, 'create'])
+        ->name('login');
+
+    Route::post('login', [AuthenticatedSessionController::class, 'store']);
+
+    Route::get('two-factor-challenge', [TwoFactorChallengeController::class, 'create'])
+        ->name('two-factor.login');
+
+    Route::post('two-factor-challenge', [TwoFactorChallengeController::class, 'store']);
+
+    Route::get('forgot-password', [PasswordResetLinkController::class, 'create'])
+        ->name('password.request');
+
+    Route::post('forgot-password', [PasswordResetLinkController::class, 'store'])
+        ->name('password.email');
+});
+
+Route::middleware('auth')->group(function () {
+    Route::get('profile', [ProfileController::class, 'edit'])
+        ->name('profile.edit');
+
+    Route::patch('profile', [ProfileController::class, 'update'])
+        ->name('profile.update');
+
+    Route::put('profile/password', [ProfileController::class, 'updatePassword'])
+        ->name('profile.password');
+
+    Route::post('profile/2fa', [ProfileController::class, 'toggleTwoFactor'])
+        ->name('profile.2fa');
+
+    Route::post('profile/2fa/enable', [ProfileController::class, 'enableTwoFactor'])
+        ->name('profile.2fa.enable');
+
+    Route::post('profile/2fa/confirm', [ProfileController::class, 'confirmTwoFactor'])
+        ->name('profile.2fa.confirm');
+
+    Route::delete('profile/2fa', [ProfileController::class, 'disableTwoFactor'])
+        ->name('profile.2fa.disable');
+
+    Route::post('profile/2fa/recovery-codes', [ProfileController::class, 'regenerateRecoveryCodes'])
+        ->name('profile.2fa.recovery-codes');
+
+    Route::post('logout', [AuthenticatedSessionController::class, 'destroy'])
+        ->name('logout');
+});

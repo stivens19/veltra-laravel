@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html lang="{{ str_replace('_', '-', app()->getLocale()) }}" data-theme="{{ config('veltra.theme.default', 'light') }}">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+
+    <title>{{ config('app.name', 'Laravel') }}</title>
+
+    <!-- Tipografías -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Anti-FOUC para Modo Oscuro -->
+    <script>
+        (function() {
+            try {
+                const key = '{{ config('veltra.theme.storage_key', 'veltra-theme') }}';
+                const defaultTheme = '{{ config('veltra.theme.default', 'light') }}';
+                const savedTheme = localStorage.getItem(key) || defaultTheme;
+                if (savedTheme === 'system') {
+                    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+                    if (prefersDark) document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                } else {
+                    document.documentElement.setAttribute('data-theme', savedTheme);
+                    if (savedTheme === 'dark') document.documentElement.classList.add('dark');
+                    else document.documentElement.classList.remove('dark');
+                }
+            } catch (e) {}
+        })();
+    </script>
+
+    <!-- Estilos VeltraUI + Vite de la aplicación -->
+    <link rel="stylesheet" href="{{ asset('vendor/veltra/css/veltra.css') }}">
+    @vite(['resources/css/app.css', 'resources/js/app.js'])
+
+    <!-- Lucide Icons CDN -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    @if(class_exists(\Flux\Flux::class))
+        @fluxAppearance
+    @endif
+</head>
+<body class="vlt-body {{ config('veltra.layout.sidebar_collapsed') ? 'sidebar-collapse' : '' }}">
+    <div class="vlt-wrapper">
+        <!-- Mobile Backdrop -->
+        <div class="vlt-backdrop" data-vlt-toggle="sidebar"></div>
+
+        <!-- Sidebar Veltra -->
+        @include('veltra::layouts.partials.sidebar')
+
+        <div class="vlt-main">
+            <!-- Header Veltra -->
+            @include('veltra::layouts.partials.header')
+
+            @if(isset($header))
+                {{ $header }}
+            @endif
+
+            <main class="vlt-content">
+                {{ $slot }}
+            </main>
+
+            <!-- Footer Veltra -->
+            @include('veltra::layouts.partials.footer')
+        </div>
+    </div>
+
+    <!-- Scripts Veltra -->
+    <script src="{{ asset('vendor/veltra/js/veltra.umd.js') }}"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            if (typeof lucide !== 'undefined') {
+                lucide.createIcons();
+            }
+
+            // Sincronización bidireccional entre el selector de Navbar y las vistas de apariencia
+            document.addEventListener('click', function(e) {
+                const btn = e.target.closest('[data-vlt-toggle="theme"]');
+                if (!btn) return;
+                setTimeout(() => {
+                    const current = document.documentElement.getAttribute('data-theme') || (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+                    try {
+                        localStorage.setItem('veltra-theme', current);
+                        localStorage.setItem('flux.appearance', current);
+                    } catch (err) {}
+                    if (window.Flux?.applyAppearance) {
+                        try { window.Flux.applyAppearance(current); } catch(err) {}
+                    }
+                    window.dispatchEvent(new CustomEvent('veltra:theme:changed', { detail: { theme: current } }));
+                }, 10);
+            });
+        });
+    </script>
+    @stack('scripts')
+    @if(class_exists(\Flux\Flux::class))
+        @fluxScripts
+    @endif
+</body>
+</html>

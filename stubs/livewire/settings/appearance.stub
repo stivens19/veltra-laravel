@@ -1,0 +1,175 @@
+<section class="w-full">
+    @include('partials.settings-heading')
+
+    <flux:heading level="2" class="sr-only">{{ __('Appearance settings') }}</flux:heading>
+
+    <x-settings.layout :heading="__('Appearance')" :subheading="__('Update the theme and visual appearance for your account')">
+        <div
+            x-data="{
+                theme: 'light',
+                init() {
+                    const saved = localStorage.getItem('veltra-theme') || localStorage.getItem('flux.appearance') || 'light';
+                    this.theme = saved;
+                    this.applyTheme(saved, false);
+
+                    // Escuchar cambios de tema desde el botón del nav o cualquier parte
+                    window.addEventListener('veltra:theme:changed', (e) => {
+                        this.theme = e.detail?.theme || 'light';
+                    });
+
+                    // También escuchar cuando cambie la preferencia del sistema operativo
+                    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', () => {
+                        if (this.theme === 'system') {
+                            this.applyTheme('system', false);
+                        }
+                    });
+                },
+                setTheme(newTheme) {
+                    this.theme = newTheme;
+                    this.applyTheme(newTheme, true);
+                },
+                applyTheme(newTheme, broadcast = true) {
+                    const root = document.documentElement;
+                    let effectiveTheme = newTheme;
+
+                    if (newTheme === 'system') {
+                        effectiveTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+                    }
+
+                    // 1. Veltra data-theme y clases dark
+                    root.setAttribute('data-theme', effectiveTheme);
+                    if (effectiveTheme === 'dark') {
+                        root.classList.add('dark');
+                    } else {
+                        root.classList.remove('dark');
+                    }
+
+                    // 2. Persistir en localStorage con ambas llaves para compatibilidad total
+                    try {
+                        localStorage.setItem('veltra-theme', newTheme);
+                        localStorage.setItem('flux.appearance', newTheme);
+                    } catch (e) {}
+
+                    // 3. Sincronizar con Flux si existe
+                    if (window.Flux?.applyAppearance) {
+                        try {
+                            window.Flux.applyAppearance(newTheme);
+                        } catch (e) {}
+                    }
+
+                    // 4. Actualizar iconos del toggle en el Navbar
+                    document.querySelectorAll('[data-vlt-toggle=\'theme\']').forEach(btn => {
+                        const icon = btn.querySelector('i[data-lucide]');
+                        if (icon) {
+                            icon.setAttribute('data-lucide', effectiveTheme === 'dark' ? 'moon' : 'sun-medium');
+                        }
+                    });
+                    if (window.lucide) {
+                        window.lucide.createIcons();
+                    }
+
+                    // 5. Notificar a toda la ventana
+                    if (broadcast) {
+                        window.dispatchEvent(new CustomEvent('veltra:theme:changed', { detail: { theme: newTheme } }));
+                    }
+                }
+            }"
+            class="space-y-6 max-w-2xl"
+        >
+            <div>
+                <label class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-3">
+                    {{ __('Theme preference') }}
+                </label>
+
+                <!-- Tarjetas Interactivas de Tema VeltraUI -->
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Light Theme Card -->
+                    <button
+                        type="button"
+                        @click="setTheme('light')"
+                        :class="theme === 'light' 
+                            ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10' 
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'"
+                        class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group"
+                    >
+                        <!-- Active Checkmark Badge -->
+                        <div 
+                            x-show="theme === 'light'" 
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs"
+                        >
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+
+                        <!-- Icon Frame -->
+                        <div class="w-12 h-12 rounded-2xl bg-amber-500/10 text-amber-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="M12 1v2m0 18v2M4.22 4.22l1.42 1.42m12.72 12.72 1.42 1.42M1 12h2m18 0h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>
+                        </div>
+
+                        <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                            {{ __('Light') }}
+                        </span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                            {{ __('Crisp, high-contrast light theme') }}
+                        </span>
+                    </button>
+
+                    <!-- Dark Theme Card -->
+                    <button
+                        type="button"
+                        @click="setTheme('dark')"
+                        :class="theme === 'dark' 
+                            ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10' 
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'"
+                        class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group"
+                    >
+                        <div 
+                            x-show="theme === 'dark'" 
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs"
+                        >
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+
+                        <div class="w-12 h-12 rounded-2xl bg-cyan-500/10 text-cyan-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+                        </div>
+
+                        <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                            {{ __('Dark') }}
+                        </span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                            {{ __('Sleek dark mode with cyan accents') }}
+                        </span>
+                    </button>
+
+                    <!-- System Theme Card -->
+                    <button
+                        type="button"
+                        @click="setTheme('system')"
+                        :class="theme === 'system' 
+                            ? 'border-cyan-500 ring-2 ring-cyan-500/20 bg-cyan-50/20 dark:bg-cyan-950/20 shadow-md shadow-cyan-500/10' 
+                            : 'border-slate-200 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700 bg-white dark:bg-slate-900'"
+                        class="relative flex flex-col items-center p-5 rounded-2xl border text-center transition-all cursor-pointer group"
+                    >
+                        <div 
+                            x-show="theme === 'system'" 
+                            class="absolute top-3 right-3 w-5 h-5 rounded-full bg-cyan-500 text-white flex items-center justify-center shadow-xs"
+                        >
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="3" stroke-linecap="round" stroke-linejoin="round" d="M5 13l4 4L19 7"/></svg>
+                        </div>
+
+                        <div class="w-12 h-12 rounded-2xl bg-indigo-500/10 text-indigo-500 flex items-center justify-center mb-3 group-hover:scale-110 transition-transform">
+                            <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="14" x="2" y="3" rx="2" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="M8 21h8m-4-4v4"/></svg>
+                        </div>
+
+                        <span class="text-sm font-bold text-slate-900 dark:text-white mb-0.5">
+                            {{ __('System') }}
+                        </span>
+                        <span class="text-[11px] text-slate-500 dark:text-slate-400">
+                            {{ __('Automatically syncs with OS theme') }}
+                        </span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </x-settings.layout>
+</section>

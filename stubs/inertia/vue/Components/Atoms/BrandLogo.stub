@@ -1,0 +1,27 @@
+<script setup>
+import { Link } from '@inertiajs/vue3';
+
+defineProps({
+    href: {
+        type: String,
+        default: '/dashboard',
+    },
+    showText: {
+        type: Boolean,
+        default: true,
+    },
+});
+</script>
+
+<template>
+    <Link :href="href" class="brand-link flex items-center gap-3">
+        <img 
+            src="/vendor/veltra/img/logo.png" 
+            alt="VeltraUI" 
+            class="brand-logo h-7 w-auto shrink-0 object-contain" 
+        />
+        <span v-if="showText" class="brand-text font-black text-slate-900 dark:text-white tracking-tight">
+            Veltra<span class="text-cyan-500">UI</span>
+        </span>
+    </Link>
+</template>

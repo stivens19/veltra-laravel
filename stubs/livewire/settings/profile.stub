@@ -1,0 +1,83 @@
+<section class="w-full">
+    @include('partials.settings-heading')
+
+    <flux:heading level="2" class="sr-only">{{ __('Profile settings') }}</flux:heading>
+
+    <x-settings.layout :heading="__('Profile Information')" :subheading="__('Update your name and email address')">
+        <form wire:submit="updateProfileInformation" class="space-y-4 max-w-xl">
+            <!-- Name -->
+            <div>
+                <label for="name" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {{ __('Name') }} <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <input
+                        id="name"
+                        type="text"
+                        wire:model="name"
+                        required
+                        autofocus
+                        autocomplete="name"
+                        placeholder="{{ __('Full name') }}"
+                        class="w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 @error('name') border-rose-500 @enderror"
+                    />
+                </div>
+                @error('name')
+                    <p class="text-[11px] font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                @enderror
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label for="email" class="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                    {{ __('Email address') }} <span class="text-rose-500">*</span>
+                </label>
+                <div class="relative">
+                    <svg class="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><rect width="20" height="16" x="2" y="4" rx="2" stroke-width="2"/><path stroke-width="2" stroke-linecap="round" d="m22 7-8.97 5.7a1.94 1.94 0 0 1-2.06 0L2 7"/></svg>
+                    <input
+                        id="email"
+                        type="email"
+                        wire:model="email"
+                        required
+                        autocomplete="email"
+                        placeholder="email@example.com"
+                        class="w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 @error('email') border-rose-500 @enderror"
+                    />
+                </div>
+                @error('email')
+                    <p class="text-[11px] font-semibold text-rose-500 mt-1">{{ $message }}</p>
+                @enderror
+
+                @if ($this->hasUnverifiedEmail)
+                    <div class="mt-2 text-xs text-amber-600 dark:text-amber-400">
+                        {{ __('Your email address is unverified.') }}
+                        <button type="button" class="underline hover:text-amber-700 dark:hover:text-amber-300 font-bold ml-1 cursor-pointer" wire:click.prevent="resendVerificationNotification">
+                            {{ __('Click here to re-send the verification email.') }}
+                        </button>
+                    </div>
+                @endif
+            </div>
+
+            <div class="flex items-center gap-4 pt-2">
+                <button
+                    type="submit"
+                    class="py-2.5 px-4 rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white font-bold text-xs shadow-md shadow-cyan-500/20 active:scale-[0.98] transition-all cursor-pointer flex items-center gap-2"
+                >
+                    <span>{{ __('Save') }}</span>
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" d="M5 13l4 4L19 7"/></svg>
+                </button>
+
+                <x-action-message class="text-xs text-emerald-600 font-bold" on="profile-updated">
+                    {{ __('Saved.') }}
+                </x-action-message>
+            </div>
+        </form>
+
+        @if ($this->showDeleteUser)
+            <div class="mt-10 pt-8 border-t border-slate-100 dark:border-slate-800">
+                <livewire:settings.delete-user-form />
+            </div>
+        @endif
+    </x-settings.layout>
+</section>

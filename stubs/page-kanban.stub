@@ -1,0 +1,70 @@
+<{{ layoutTag }}>
+    <x-slot name="header">
+        <section class="vlt-content-header">
+            <div>
+                <h1 class="vlt-page-title">{{ __('{{ pageTitle }}') }}</h1>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">
+                    {{ __('{{ pageSubtitle }}') }}
+                </p>
+            </div>
+            <nav class="vlt-breadcrumb" aria-label="Breadcrumb">
+                <ol class="flex items-center gap-2 text-xs">
+                    <li><a href="{{ route('dashboard') }}" class="text-slate-500 hover:text-cyan-600 font-medium">{{ __('Home') }}</a></li>
+                    <li><span class="text-slate-300 dark:text-slate-600">/</span></li>
+                    <li class="active font-bold text-cyan-600">{{ __('{{ pageTitle }}') }}</li>
+                </ol>
+            </nav>
+        </section>
+    </x-slot>
+
+    <div class="w-full">
+        <!-- Kanban Columns Board -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Column: To Do -->
+            <div class="space-y-4 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                    <span class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('To Do') }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400">3</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">{{ __('User Journey Design') }}</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Wireframe and review modern auth cards') }}</p>
+                    </div>
+                    <div class="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">{{ __('API Integration') }}</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Connect payment webhooks') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column: In Progress -->
+            <div class="space-y-4 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                    <span class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('In Progress') }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 dark:bg-amber-950/40 text-amber-600 dark:text-amber-400">2</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">{{ __('Artisan Commands') }}</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Implement interactive page scaffolding wizard') }}</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Column: Done -->
+            <div class="space-y-4 bg-slate-50/50 dark:bg-slate-900/40 p-4 rounded-2xl border border-slate-200/60 dark:border-slate-800">
+                <div class="flex items-center justify-between pb-2 border-b border-slate-200/60 dark:border-slate-800">
+                    <span class="font-bold text-xs uppercase tracking-wider text-slate-700 dark:text-slate-300">{{ __('Done') }}</span>
+                    <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 dark:text-emerald-400">5</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="p-4 bg-white dark:bg-slate-800/90 rounded-xl border border-slate-200/80 dark:border-slate-700 shadow-xs">
+                        <h4 class="text-xs font-bold text-slate-900 dark:text-white">{{ __('VeltraUI Core Design') }}</h4>
+                        <p class="text-[11px] text-slate-500 dark:text-slate-400 mt-1">{{ __('Tailwind styles, tokens, and Zero-FOUC script') }}</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</{{ layoutTag }}>

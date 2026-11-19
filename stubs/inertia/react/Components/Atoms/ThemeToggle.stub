@@ -1,0 +1,51 @@
+import React, { useState, useEffect } from 'react';
+import { SunMedium, Moon } from 'lucide-react';
+
+export default function ThemeToggle({ className = '' }: { className?: string }) {
+    const [isDark, setIsDark] = useState(false);
+
+    useEffect(() => {
+        const checkTheme = () => {
+            const currentTheme = document.documentElement.getAttribute('data-theme') || 
+                (document.documentElement.classList.contains('dark') ? 'dark' : 'light');
+            setIsDark(currentTheme === 'dark');
+        };
+
+        checkTheme();
+        const observer = new MutationObserver(checkTheme);
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class', 'data-theme'] });
+        return () => observer.disconnect();
+    }, []);
+
+    const toggleTheme = () => {
+        const nextTheme = isDark ? 'light' : 'dark';
+        document.documentElement.setAttribute('data-theme', nextTheme);
+        if (nextTheme === 'dark') {
+            document.documentElement.classList.add('dark');
+        } else {
+            document.documentElement.classList.remove('dark');
+        }
+        try {
+            localStorage.setItem('veltra-theme', nextTheme);
+            localStorage.setItem('appearance', nextTheme);
+            document.cookie = `appearance=${nextTheme};path=/;max-age=31536000;SameSite=Lax`;
+        } catch (e) {}
+        setIsDark(!isDark);
+    };
+
+    return (
+        <button
+            type="button"
+            onClick={toggleTheme}
+            aria-label="Alternar tema claro/oscuro"
+            title="Alternar Tema Claro/Oscuro"
+            className={`w-9 h-9 rounded-xl flex items-center justify-center text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-slate-100 bg-slate-100/80 dark:bg-slate-800/80 transition-colors border border-slate-200/50 dark:border-slate-700/50 cursor-pointer ${className}`}
+        >
+            {isDark ? (
+                <SunMedium className="w-4 h-4 text-amber-400" />
+            ) : (
+                <Moon className="w-4 h-4 text-cyan-600" />
+            )}
+        </button>
+    );
+}

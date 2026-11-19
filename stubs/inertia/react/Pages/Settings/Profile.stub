@@ -1,0 +1,236 @@
+import { Head, Link, useForm, usePage } from '@inertiajs/react';
+import { useRef, useState } from 'react';
+import { User, Mail, Save, Check, AlertTriangle, Trash2 } from 'lucide-react';
+import SettingsLayout from '@/layouts/settings/layout';
+
+export default function Profile({
+    mustVerifyEmail = false,
+    status = '',
+}: {
+    mustVerifyEmail?: boolean;
+    status?: string;
+    [key: string]: any;
+}) {
+    const { auth } = usePage<any>().props;
+    const user = auth?.user || { name: 'Usuario', email: 'user@example.com' };
+
+    // 1. Profile Form
+    const profileForm = useForm({
+        name: user.name || '',
+        email: user.email || '',
+    });
+
+    const submitProfile = (e: React.FormEvent) => {
+        e.preventDefault();
+        profileForm.patch('/settings/profile', {
+            preserveScroll: true,
+        });
+    };
+
+    // 2. Delete User State
+    const [confirmingUserDeletion, setConfirmingUserDeletion] = useState(false);
+    const deletePasswordInput = useRef<HTMLInputElement>(null);
+
+    const deleteForm = useForm({
+        password: '',
+    });
+
+    const confirmDelete = () => {
+        setConfirmingUserDeletion(true);
+        setTimeout(() => deletePasswordInput.current?.focus(), 100);
+    };
+
+    const closeModal = () => {
+        setConfirmingUserDeletion(false);
+        deleteForm.clearErrors();
+        deleteForm.reset();
+    };
+
+    const deleteUser = (e: React.FormEvent) => {
+        e.preventDefault();
+        deleteForm.delete('/settings/profile', {
+            preserveScroll: true,
+            onSuccess: () => closeModal(),
+            onError: () => deletePasswordInput.current?.focus(),
+            onFinish: () => deleteForm.reset(),
+        });
+    };
+
+    return (
+        <SettingsLayout>
+            <Head title="Perfil" />
+
+            <div className="space-y-6">
+                {/* 1. Información del Perfil */}
+                <div id="profile" className="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                        <div>
+                            <h3 className="text-sm font-bold text-slate-900 dark:text-white flex items-center gap-2">
+                                <User className="w-4 h-4 text-cyan-500" />
+                                Información Personal
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Actualiza el nombre completo y la dirección de correo de tu cuenta.
+                            </p>
+                        </div>
+                        {status === 'profile-updated' && (
+                            <span className="vlt-pill vlt-pill-emerald text-xs font-semibold py-1 px-3 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 flex items-center gap-1">
+                                <Check className="w-3.5 h-3.5" />
+                                Perfil Guardado
+                            </span>
+                        )}
+                    </div>
+
+                    <form onSubmit={submitProfile} className="space-y-4 max-w-xl">
+                        <div>
+                            <label htmlFor="name" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Nombre Completo <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <User className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                                <input
+                                    id="name"
+                                    type="text"
+                                    value={profileForm.data.name}
+                                    onChange={(e) => profileForm.setData('name', e.target.value)}
+                                    required
+                                    autoComplete="name"
+                                    className={`w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border ${
+                                        profileForm.errors.name ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                                    } focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors`}
+                                />
+                            </div>
+                            {profileForm.errors.name && (
+                                <p className="text-[11px] font-semibold text-rose-500 mt-1">{profileForm.errors.name}</p>
+                            )}
+                        </div>
+
+                        <div>
+                            <label htmlFor="email" className="block text-xs font-bold text-slate-700 dark:text-slate-300 mb-1">
+                                Correo Electrónico <span className="text-rose-500">*</span>
+                            </label>
+                            <div className="relative">
+                                <Mail className="w-4 h-4 text-slate-400 absolute left-3.5 top-2.5 pointer-events-none" />
+                                <input
+                                    id="email"
+                                    type="email"
+                                    value={profileForm.data.email}
+                                    onChange={(e) => profileForm.setData('email', e.target.value)}
+                                    required
+                                    autoComplete="username"
+                                    className={`w-full pl-10 pr-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border ${
+                                        profileForm.errors.email ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                                    } focus:outline-none focus:border-cyan-500 text-slate-800 dark:text-slate-100 placeholder:text-slate-400 transition-colors`}
+                                />
+                            </div>
+                            {profileForm.errors.email && (
+                                <p className="text-[11px] font-semibold text-rose-500 mt-1">{profileForm.errors.email}</p>
+                            )}
+                        </div>
+
+                        <div className="pt-2">
+                            <button
+                                type="submit"
+                                disabled={profileForm.processing}
+                                className="px-4 py-2 text-xs font-bold rounded-xl bg-cyan-500 hover:bg-cyan-600 text-white transition-all shadow-md shadow-cyan-500/20 disabled:opacity-50 flex items-center gap-1.5 cursor-pointer"
+                            >
+                                <Save className="w-3.5 h-3.5" />
+                                <span>{profileForm.processing ? 'Guardando...' : 'Guardar Cambios'}</span>
+                            </button>
+                        </div>
+                    </form>
+                </div>
+
+                {/* 2. Eliminar Cuenta */}
+                <div id="danger-zone" className="vlt-card border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 shadow-xs">
+                    <div className="flex items-center justify-between pb-4 border-b border-slate-100 dark:border-slate-800 mb-5">
+                        <div>
+                            <h3 className="text-sm font-bold text-rose-600 dark:text-rose-400 flex items-center gap-2">
+                                <Trash2 className="w-4 h-4 text-rose-500" />
+                                Eliminar Cuenta
+                            </h3>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                                Una vez que tu cuenta sea eliminada, todos sus recursos y datos serán borrados permanentemente.
+                            </p>
+                        </div>
+                    </div>
+
+                    <div className="space-y-4 max-w-xl">
+                        <div className="p-4 rounded-xl bg-rose-50/50 dark:bg-rose-950/20 border border-rose-200/60 dark:border-rose-900/40 text-rose-800 dark:text-rose-200 text-xs">
+                            <div className="flex items-center gap-2 font-bold mb-1">
+                                <AlertTriangle className="w-4 h-4 text-rose-500" />
+                                <span>Advertencia Crítica</span>
+                            </div>
+                            Antes de eliminar tu cuenta, descarga cualquier dato o información relevante que desees conservar.
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={confirmDelete}
+                            className="px-4 py-2 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors cursor-pointer flex items-center gap-1.5"
+                        >
+                            <Trash2 className="w-3.5 h-3.5" />
+                            <span>Eliminar Cuenta Definitivamente</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            {/* Modal de Confirmación de Eliminación de Cuenta */}
+            {confirmingUserDeletion && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-xs">
+                    <div className="vlt-card border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl p-6 max-w-md w-full shadow-2xl space-y-4">
+                        <div className="flex items-center gap-3 text-rose-600 dark:text-rose-400">
+                            <div className="w-10 h-10 rounded-xl bg-rose-100 dark:bg-rose-950/50 flex items-center justify-center">
+                                <AlertTriangle className="w-5 h-5" />
+                            </div>
+                            <div>
+                                <h4 className="text-sm font-bold text-slate-900 dark:text-white">¿Confirmas la eliminación?</h4>
+                                <p className="text-[11px] text-slate-500 dark:text-slate-400">Esta acción es irreversible.</p>
+                            </div>
+                        </div>
+
+                        <p className="text-xs text-slate-600 dark:text-slate-300">
+                            Por favor ingresa tu contraseña para confirmar que deseas eliminar tu cuenta permanentemente.
+                        </p>
+
+                        <form onSubmit={deleteUser} className="space-y-4">
+                            <div>
+                                <input
+                                    ref={deletePasswordInput}
+                                    type="password"
+                                    value={deleteForm.data.password}
+                                    onChange={(e) => deleteForm.setData('password', e.target.value)}
+                                    placeholder="Ingresa tu contraseña"
+                                    className={`w-full px-3 py-2 text-xs rounded-xl bg-slate-50 dark:bg-slate-800 border ${
+                                        deleteForm.errors.password ? 'border-rose-500' : 'border-slate-200 dark:border-slate-700'
+                                    } focus:outline-none focus:border-rose-500 text-slate-800 dark:text-slate-100 transition-colors`}
+                                />
+                                {deleteForm.errors.password && (
+                                    <p className="text-[11px] font-semibold text-rose-500 mt-1">{deleteForm.errors.password}</p>
+                                )}
+                            </div>
+
+                            <div className="flex items-center justify-end gap-2 pt-2">
+                                <button
+                                    type="button"
+                                    onClick={closeModal}
+                                    className="px-3.5 py-1.5 text-xs font-semibold rounded-xl text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={deleteForm.processing}
+                                    className="px-4 py-1.5 text-xs font-bold rounded-xl bg-rose-600 hover:bg-rose-700 text-white transition-colors disabled:opacity-50 cursor-pointer"
+                                >
+                                    {deleteForm.processing ? 'Eliminando...' : 'Sí, eliminar'}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
+        </SettingsLayout>
+    );
+}

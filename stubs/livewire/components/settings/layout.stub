@@ -1,0 +1,66 @@
+@props([
+    'heading' => null,
+    'subheading' => null,
+])
+
+<div class="grid grid-cols-1 md:grid-cols-12 gap-6 items-start">
+    <!-- Sub-Navigation Menu Lateral de Settings -->
+    <div class="md:col-span-3">
+        <div class="vlt-card p-3 border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xs">
+            <div class="px-3 py-2 text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider border-b border-slate-100 dark:border-slate-800 mb-2">
+                {{ __('Account Settings') }}
+            </div>
+            <nav class="space-y-1">
+                <a 
+                    href="{{ route('profile.edit') }}" 
+                    wire:navigate
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('profile.edit') ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white' }}"
+                >
+                    <svg class="w-4 h-4 {{ request()->routeIs('profile.edit') ? 'text-cyan-500' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    <span>{{ __('Profile') }}</span>
+                </a>
+
+                <a 
+                    href="{{ route('security.edit') }}" 
+                    wire:navigate
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('security.edit') ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white' }}"
+                >
+                    <svg class="w-4 h-4 {{ request()->routeIs('security.edit') ? 'text-cyan-500' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+                    <span>{{ __('Security & 2FA') }}</span>
+                </a>
+
+                <a 
+                    href="{{ route('appearance.edit') }}" 
+                    wire:navigate
+                    class="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-bold transition-all {{ request()->routeIs('appearance.edit') ? 'bg-cyan-500/10 text-cyan-600 dark:text-cyan-400 border border-cyan-500/20 shadow-xs' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/60 hover:text-slate-900 dark:hover:text-white' }}"
+                >
+                    <svg class="w-4 h-4 {{ request()->routeIs('appearance.edit') ? 'text-cyan-500' : 'text-slate-400' }}" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/></svg>
+                    <span>{{ __('Appearance') }}</span>
+                </a>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Panel de Contenido Principal -->
+    <div class="md:col-span-9 space-y-6">
+        <div class="vlt-card p-6 border border-slate-200/80 dark:border-slate-800 bg-white dark:bg-slate-900 rounded-2xl shadow-xs">
+            @if ($heading || $subheading)
+                <div class="flex items-center gap-3 pb-4 border-b border-slate-100 dark:border-slate-800 mb-6">
+                    <div class="w-10 h-10 rounded-xl bg-cyan-50 dark:bg-cyan-950/40 text-cyan-600 dark:text-cyan-400 flex items-center justify-center shrink-0">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M11 5H6a2 2 0 0 0-2 2v11a2 2 0 0 0 2 2h11a2 2 0 0 0 2-2v-5m-1.414-9.414a2 2 0 1 1 2.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/></svg>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-slate-900 dark:text-white">{{ $heading }}</h3>
+                        @if ($subheading)
+                            <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{{ $subheading }}</p>
+                        @endif
+                    </div>
+                </div>
+            @endif
+
+            <div class="w-full">
+                {{ $slot }}
+            </div>
+        </div>
+    </div>
+</div>

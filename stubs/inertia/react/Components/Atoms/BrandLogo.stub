@@ -1,0 +1,19 @@
+import React from 'react';
+import { Link } from '@inertiajs/react';
+
+export default function BrandLogo({ href = '/dashboard', showText = true, className = '' }) {
+    return (
+        <Link href={href} className={`brand-link flex items-center gap-3 ${className}`}>
+            <img 
+                src="/vendor/veltra/img/logo.png" 
+                alt="VeltraUI" 
+                className="brand-logo h-7 w-auto shrink-0 object-contain" 
+            />
+            {showText && (
+                <span className="brand-text font-black text-slate-900 dark:text-white tracking-tight">
+                    Veltra<span className="text-cyan-500">UI</span>
+                </span>
+            )}
+        </Link>
+    );
+}
