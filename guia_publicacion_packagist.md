@@ -20,11 +20,11 @@ composer require veltra/veltra-laravel
 └────────────────┬────────────────┘
                  ▼
 ┌─────────────────────────────────┐
-│ 3. Enviar a Packagist.org       │  Submit Repository URL
+│ 3. Enviar a Packagist.org       │  Submit Repository URL (¡Ya registrado!)
 └────────────────┬────────────────┘
                  ▼
 ┌─────────────────────────────────┐
-│ 4. Webhook / GitHub App         │  Sincronización automática de releases
+│ 4. GitHub Actions (CI & Sync)   │  Pruebas multi-versión y Auto-Update
 └────────────────┬────────────────┘
                  ▼
 ┌─────────────────────────────────┐
@@ -50,7 +50,7 @@ cd d:\PROYECTOS_LIBRES\veltra_exosistema\veltra-laravel
 composer validate --strict
 ```
 
-> **Resultado esperado**: `composer.json is valid`. Si hay advertencias de campos faltantes o formato, corrígelas antes de continuar.
+> **Resultado esperado**: `./composer.json is valid`.
 
 ### 1.2. Verificar el archivo `.gitignore`
 Asegúrate de que en `veltra-laravel/.gitignore` estén excluidas las dependencias locales y archivos temporales:
@@ -105,7 +105,7 @@ git add .
 # Crear el primer commit
 git commit -m "feat: initial release of veltra-laravel enterprise dashboard suite"
 
-# Vincular con tu repositorio remoto de GitHub (reemplaza con tu URL real)
+# Vincular con tu repositorio remoto de GitHub (reemplaza con tu usuario real)
 git remote add origin https://github.com/<TU_USUARIO_O_ORGANIZACION>/veltra-laravel.git
 
 # Subir a GitHub
@@ -118,47 +118,72 @@ git push -u origin main
 
 ### 3.1. Iniciar sesión en Packagist
 1. Ve a [https://packagist.org/](https://packagist.org/).
-2. Haz clic en **Login** (se recomienda usar **Login with GitHub** para vincular tus permisos automáticamente).
+2. Inicia sesión con tu cuenta de GitHub (usuario: **`stivens19`**).
 
 ### 3.2. Enviar el paquete
+*(Si ya lo enviaste, este paso está completo)*:
 1. En el menú superior de Packagist, haz clic en **[Submit](https://packagist.org/packages/submit)**.
 2. En el campo **Repository URL (Git/Svn/Hg)**, pega la URL pública de tu repositorio de GitHub:
    ```text
    https://github.com/<TU_USUARIO_O_ORGANIZACION>/veltra-laravel
    ```
-3. Haz clic en **Check**.
-   - Packagist clonará temporalmente los metadatos y leerá el `name` definido en tu `composer.json` (`veltra/veltra-laravel`).
-4. Haz clic en **Submit**.
-
-> [!NOTE]
-> Si el prefijo/vendor `veltra` ya fue reclamado por otro desarrollador, Packagist te avisará. En ese caso, puedes cambiar el vendor a tu nombre de usuario de GitHub o corporativo en `composer.json` (por ejemplo, `tunombre/veltra-laravel` o `veltra-ui/veltra-laravel`).
+3. Haz clic en **Check** y luego en **Submit**.
 
 ---
 
-## ⚡ Fase 4: Configurar Auto-Update (Sincronización Automática)
+## ⚡ Fase 4: Automatización con GitHub Actions (CI & Auto-Update)
 
-Para que Packagist detecte automáticamente cada `git push` o nuevo release sin tener que presionar manualmente el botón "Update" en la web de Packagist:
+El paquete incluye flujos de trabajo profesionales de **GitHub Actions** en `.github/workflows/`:
 
-### Método Recomendado: Packagist GitHub App
-1. Entra en Packagist a tu perfil: [https://packagist.org/profile/](https://packagist.org/profile/).
-2. Verás un banner o botón para conectar la **Packagist GitHub Service / App**.
-3. Haz clic en conectar y autoriza a Packagist acceso a tus repositorios públicos.
-4. Con esto, cada vez que hagas un commit o crees un tag, GitHub notificará a Packagist al instante.
+### 1. `run-tests.yml` (Integración Continua - CI)
+Ejecuta la validación estricta de Composer y la suite de pruebas PHPUnit en una matriz de entornos:
+* **PHP**: `8.2`, `8.3`, `8.4`
+* **Laravel**: `10.*`, `11.*`, `12.*`, `13.*`
+* **Orchestra Testbench**: `8.*`, `9.*`, `10.*`, `11.*`
+* Se ejecuta automáticamente en cada `push` a ramas principales y en cada `tag` de versión.
 
-### Método Alternativo: Webhook Manual
-Si prefieres un Webhook directo en GitHub:
-1. En GitHub, ve a tu repositorio `veltra-laravel` -> **Settings** -> **Webhooks** -> **Add webhook**.
-2. **Payload URL**: `https://packagist.org/api/github?username=<TU_USUARIO_PACKAGIST>`
-3. **Content type**: `application/json`
-4. **Secret**: Tu token de API de Packagist (obtenido en tu perfil de Packagist -> *Show API Token*).
-5. **Which events**: Selecciona *Just the push event*.
+### 2. `update-packagist.yml` (Sincronización Automática con Packagist)
+Envía un webhook automático a Packagist en cada `push` a `main` y en cada nuevo `tag` (`v*`).
+
+---
+
+### ⚙️ Configuración del Secret en GitHub
+
+Para que el workflow de sincronización tenga acceso seguro a Packagist:
+
+1. **Obtener tu Token en Packagist**:
+   - Entra a [https://packagist.org/profile/](https://packagist.org/profile/).
+   - En la sección **Your API Tokens**, haz clic en **`Show Safe API Token`** (o `Show Main API Token`).
+   - Copia el código alfanumérico del token.
+
+2. **Crear el Secret en GitHub**:
+   - Ve a tu repositorio en GitHub: `https://github.com/<TU_USUARIO>/veltra-laravel`.
+   - Haz clic en **Settings** (pestaña superior derecha).
+   - En el menú lateral izquierdo, haz clic en **Secrets and variables** ➔ **Actions**.
+   - Haz clic en el botón verde **New repository secret**.
+   - Llena los datos:
+     - **Name**: `PACKAGIST_TOKEN`
+     - **Secret**: Pega el API Token que copiaste de Packagist.
+   - Haz clic en **Add secret**.
+
+*(Opcional: puedes agregar otro secret llamado `PACKAGIST_USERNAME` con valor `stivens19`, aunque por defecto el workflow ya toma `stivens19`).*
+
+---
+
+### 📌 Método Alternativo: Webhook directo en GitHub
+Si además deseas configurar el Webhook nativo de GitHub:
+1. En GitHub -> Repositorio `veltra-laravel` -> **Settings** -> **Webhooks** -> **Add webhook**.
+2. **Payload URL**: `https://packagist.org/api/github?username=stivens19`
+3. **Content type**: `application/json` *(⚠️ Importante: NO urlencoded)*
+4. **Secret**: Tu *Safe API Token* de Packagist.
+5. **Which events**: *Just the `push` event*.
 6. Haz clic en **Add webhook**.
 
 ---
 
 ## 🏷️ Fase 5: Versionado Semántico y Creación de Tags (SemVer)
 
-Por defecto, Packagist solo ofrecerá la rama `dev-main`. Para que los desarrolladores puedan instalar una versión estable sin banderas de estabilidad, **debes publicar un tag semántico**.
+Para que los desarrolladores puedan instalar una versión estable sin requerir banderas `dev-main`, **debes publicar un tag semántico**.
 
 ### 5.1. Crear el primer Tag de versión (v1.0.0)
 Desde tu terminal:
@@ -173,6 +198,8 @@ git tag -a v1.0.0 -m "Release v1.0.0: Soporte completo para Laravel 10-13, Livew
 git push origin v1.0.0
 ```
 
+> **Al hacer este push**: GitHub Actions ejecutará automáticamente la suite de pruebas y llamará a la API de Packagist para registrar la versión estable `1.0.0`.
+
 ### 5.2. Crear el Release en GitHub (Recomendado para DX)
 1. Ve a tu repositorio en GitHub -> pestaña **Releases** (a la derecha).
 2. Haz clic en **Draft a new release**.
@@ -184,13 +211,11 @@ git push origin v1.0.0
    - Generadores `veltra:make:crud` y servidor MCP para agentes de IA.
 6. Haz clic en **Publish release**.
 
-Packagist se actualizará inmediatamente mostrando la versión estable **`1.0.0`**.
-
 ---
 
 ## 🧪 Fase 6: Prueba de Instalación en Limpio (Smoke Test)
 
-Para verificar que el paquete esté funcionando desde Packagist en todo el mundo, crea un proyecto Laravel de prueba o abre uno existente:
+Prueba la instalación del paquete desde cualquier proyecto Laravel:
 
 ```bash
 # 1. Instalar el paquete desde Packagist
@@ -207,9 +232,11 @@ php artisan veltra:make:component MetricCard
 
 ## 🛡️ Fase 7: Badges de Estado para tu `README.md`
 
-Agrega estos badges al inicio de tu [README.md](file:///d:/PROYECTOS_LIBRES/veltra_exosistema/veltra-laravel/README.md) para dar una imagen profesional y de confianza a la comunidad:
+Agrega estos badges al inicio de tu [README.md](file:///d:/PROYECTOS_LIBRES/veltra_exosistema/veltra-laravel/README.md) para reflejar la calidad del paquete:
 
 ```markdown
+[![Run Tests](https://github.com/stivens19/veltra-laravel/actions/workflows/run-tests.yml/badge.svg)](https://github.com/stivens19/veltra-laravel/actions/workflows/run-tests.yml)
+[![Notify Packagist](https://github.com/stivens19/veltra-laravel/actions/workflows/update-packagist.yml/badge.svg)](https://github.com/stivens19/veltra-laravel/actions/workflows/update-packagist.yml)
 [![Latest Version on Packagist](https://img.shields.io/packagist/v/veltra/veltra-laravel.svg?style=flat-square&color=06b6d4)](https://packagist.org/packages/veltra/veltra-laravel)
 [![Total Downloads](https://img.shields.io/packagist/dt/veltra/veltra-laravel.svg?style=flat-square&color=10b981)](https://packagist.org/packages/veltra/veltra-laravel)
 [![Software License](https://img.shields.io/badge/license-MIT-blue.svg?style=flat-square)](LICENSE.md)
@@ -219,8 +246,6 @@ Agrega estos badges al inicio de tu [README.md](file:///d:/PROYECTOS_LIBRES/velt
 ---
 
 ## 🔄 Flujo de Trabajo para Futuras Actualizaciones
-
-Cuando agregues nuevas características o corrijas errores:
 
 | Tipo de Cambio | Ejemplo de Cambio | Próxima Versión | Comando Git |
 | :--- | :--- | :--- | :--- |

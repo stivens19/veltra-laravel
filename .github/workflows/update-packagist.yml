@@ -1,0 +1,17 @@
+name: Notify Packagist
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+
+jobs:
+  notify-packagist:
+    name: Trigger Packagist Auto-Update
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Packagist Update
+        run: |
+          curl -s -X POST -H "Content-Type: application/json" \
+            "https://packagist.org/api/update-package?username=${{ secrets.PACKAGIST_USERNAME || 'stivens19' }}&apiToken=${{ secrets.PACKAGIST_TOKEN }}" \
+            -d '{"repository":{"url":"https://packagist.org/packages/veltra/veltra-laravel"}}'
